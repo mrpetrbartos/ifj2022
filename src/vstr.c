@@ -1,3 +1,9 @@
+/**
+ * @file vstr.h
+ * @author Petr Bartoš (xbarto0g)
+ * @brief Implementation of custom variable-length string.
+ */
+
 #include "vstr.h"
 
 bool vStrInit(vStr *str)
