@@ -1,11 +1,11 @@
 # ifj2022
 PHP-ish language compiler
 ## Team members
-- Dmytro Afanasiev
+- Dmytro Afanasiev - xafana01
   - TBD
-- Petr Bartoš
+- Petr Bartoš - xbarto0g
   - TBD
-- Tomáš Rajsigl
+- Tomáš Rajsigl - xrajsi01
   - TBD
-- Lukáš Zedek
+- Lukáš Zedek - xzedek03
   - TBD
