@@ -2,10 +2,10 @@
 PHP-ish language compiler
 ## Team members
 - Dmytro Afanasiev - xafana01
-  - TBD
+  - Generátor kódu, Makefile, testy
 - Petr Bartoš - xbarto0g
-  - TBD
+  - Syntaktický a semantický analyzátor, tabulka symbolů, code review
 - Tomáš Rajsigl - xrajsi01
-  - TBD
+  - Lexikální analýza, dokumentace 
 - Lukáš Zedek - xzedek03
-  - TBD
+  - Generátor kódu, testy, dokumentace 
