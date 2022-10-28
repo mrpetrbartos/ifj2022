@@ -12,6 +12,20 @@
 
 typedef enum
 {
+    STATE_INITIAL,
+    STATE_LESSTHAN,
+    STATE_GREATERTHAN,
+    STATE_VARID_PREFIX,
+    STATE_VARID,
+    STATE_IDENTIFIER,
+    STATE_COMMENT,
+    STATE_SLASH,
+    STATE_LINE_COM,
+    STATE_MULTILINE_COM,
+    STATE_POT_MULTILINE_END
+} State;
+typedef enum
+{
     KW_ELSE,
     KW_FLOAT,
     KW_FUNCTION,
@@ -42,6 +56,8 @@ typedef enum
     TOKEN_MULTIPLY,
     TOKEN_DIVIDE,
 
+    TOKEN_ASSIGN,
+
     TOKEN_CONCAT,
 
     TOKEN_EQUAL,
@@ -60,7 +76,7 @@ typedef enum
 
 typedef union
 {
-    vStr *string;
+    vStr string;
     int integer;
     Keyword keyword;
     double decimal;
