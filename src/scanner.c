@@ -4,6 +4,7 @@
  * @brief Implementation of scanner.
  */
 
+#include <ctype.h>
 #include <stdlib.h>
 #include "scanner.h"
 #include "error.h"
@@ -80,6 +81,8 @@ int getToken(Token *token)
 
     static int lineNum = 1;
     static int charNum = 0;
+    char hexa[3] = {0};
+    char octa[4] = {0};
     bool tokenComplete = false;
 
     token->type = TOKEN_EMPTY;
@@ -113,9 +116,44 @@ int getToken(Token *token)
             case '/':
                 state = STATE_SLASH;
                 break;
-
-                // TODO: LBR, RBR, COMMA, SEMICOL, CONCAT, EOF, ASSIGN
-
+            case '(':
+                token->type = TOKEN_LEFT_BRACKET;
+                tokenComplete = true;
+                break;
+            case ')':
+                token->type = TOKEN_RIGHT_BRACKET;
+                tokenComplete = true;
+                break;
+            case '{':
+                token->type = TOKEN_LEFT_BRACE;
+                tokenComplete = true;
+                break;
+            case '}':
+                token->type = TOKEN_RIGHT_BRACE;
+                tokenComplete = true;
+                break;
+            case ',':
+                token->type = TOKEN_COMMA;
+                tokenComplete = true;
+                break;
+            case ';':
+                token->type = TOKEN_SEMICOLON;
+                tokenComplete = true;
+                break;
+            case '.':
+                token->type = TOKEN_CONCAT;
+                tokenComplete = true;
+                break;                
+            case EOF:
+                token->type = TOKEN_EOF;
+                tokenComplete = true;
+                break;
+            case '=':
+                state = STATE_EQUAL_OR_ASSIGN;
+                break;
+            case '!':
+                state = STATE_NOT_EQUAL_0;
+                break;
             case '<':
                 state = STATE_LESSTHAN;
                 break;
@@ -125,10 +163,18 @@ int getToken(Token *token)
             case '$':
                 state = STATE_VARID_PREFIX;
                 break;
+            case '\"':
+                state = STATE_STRING;
+                break;
             default:
                 if (isalpha(c) || c == '_')
                 {
                     state = STATE_IDENTIFIER;
+                    ungetc(c, sourceFile);
+                }
+                else if (isdigit(c))
+                {
+                    state = STATE_NUMBER;
                     ungetc(c, sourceFile);
                 }
                 else if (isspace(c))
@@ -147,6 +193,7 @@ int getToken(Token *token)
                 }
                 break;
             }
+            break;
         case STATE_LESSTHAN:
             if (c == '=')
                 token->type = TOKEN_LESS_EQUAL;
@@ -158,7 +205,61 @@ int getToken(Token *token)
             tokenComplete = true;
             break;
         case STATE_GREATERTHAN:
-            // TODO
+            if (c == '=')
+                token->type = TOKEN_GREATER_EQUAL;
+            else
+            {
+                token->type = TOKEN_GREATER_THAN;
+                ungetc(c, sourceFile);
+            }
+            tokenComplete = true;
+            break;
+        case STATE_NOT_EQUAL_0:
+            if (c == '=')
+                state = STATE_NOT_EQUAL_1;
+            else
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Unknown lexeme");
+                return ERR_LEXICAL_AN;
+            }   
+            break;
+        case STATE_NOT_EQUAL_1:
+            if (c == '=')
+            {
+                token->type = TOKEN_NOT_EQUAL;
+                tokenComplete = true;
+            }
+            else
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Unknown lexeme, did you mean to use '!=='?");
+                return ERR_LEXICAL_AN;
+            }   
+            break;
+        case STATE_EQUAL_OR_ASSIGN:
+            if (c != '=')
+            {
+                token->type = TOKEN_ASSIGN;
+                ungetc(c, sourceFile);
+            }
+            else
+            {
+                state = STATE_EQUAL;
+            }
+            break;
+        case STATE_EQUAL:
+            if (c == '=')
+            {
+                token->type = TOKEN_EQUAL;
+                tokenComplete = true;
+            }
+            else
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Unknown lexeme, did you mean to use '==='?");
+                return ERR_LEXICAL_AN;
+            }
             break;
         case STATE_VARID_PREFIX:
             if (isalpha(c) || c == '_')
@@ -195,6 +296,236 @@ int getToken(Token *token)
                     token->type = TOKEN_IDENTIFIER;
                 }
                 tokenComplete = true;
+            }
+            break;
+        case STATE_NUMBER:
+            if (isdigit(c))
+            {
+                vStrAppend(&string, c);
+            }
+            else if (c == '.')
+            {
+                vStrAppend(&string, c);
+                state = STATE_FLOAT_0;
+            }
+            else if (c == 'e' || c == 'E')
+            {   
+                vStrAppend(&string, c);
+                state = STATE_FLOAT_E_0;
+            }
+            else
+            {
+                char *endPtr = NULL;
+                ungetc(c, sourceFile);
+                unsigned long value = strtoul((&string)->content, endPtr, 10);
+                if (*endPtr != '\0')
+                {
+                    vStrFree(&string);
+                    printError(0, 0, "Integer conversion has failed");
+                    return ERR_INTERNAL;
+                }
+                token->type = TOKEN_INT;
+                token->value.integer = value;
+                tokenComplete = true;
+            }
+            break;
+        case STATE_FLOAT_0:
+            if (isdigit(c))
+            {
+                ungetc(c, sourceFile);
+                state = STATE_FLOAT_1;
+            }
+            else
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Unknown lexeme, dot must be followed by a digit");
+                return ERR_LEXICAL_AN;
+            }
+            break;
+        case STATE_FLOAT_1:
+            if (isdigit(c))
+            {
+                vStrAppend(&string, c);
+            }
+            else if (c == 'e' || c == 'E')
+            {
+                state = STATE_FLOAT_E_0;
+                vStrAppend(&string, c);
+            }
+            else
+            {
+                char *endPtr = NULL;
+                ungetc(c, sourceFile);
+                double value = strtod((&string)->content, endPtr);
+                if (*endPtr != '\0')
+                {
+                    vStrFree(&string);
+                    printError(0, 0, "Float conversion has failed");
+                    return ERR_INTERNAL;
+                }
+                token->type = TOKEN_FLOAT;
+                token->value.decimal = value;
+                tokenComplete = true;
+            }
+            break;
+        case STATE_FLOAT_E_0:
+            if (c == '+' || c == '-')
+            {
+                vStrAppend(&string, c);
+                state = STATE_FLOAT_E_1;
+            }
+            else if (isdigit(c))
+            {
+                ungetc(c, sourceFile);
+                state = STATE_FLOAT_E_1;
+            }
+            else
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Unknown lexeme, exponent must be followed by a (signed) digit");
+                return ERR_LEXICAL_AN; 
+            }
+            break;
+        case STATE_FLOAT_E_1:
+            if (isdigit(c))
+            {
+                vStrAppend(&string, c);
+            }
+            else
+            {
+                char *endPtr = NULL;
+                ungetc(c, sourceFile);
+                double value = strtod((&string)->content, endPtr);
+                if (*endPtr != '\0')
+                {
+                    vStrFree(&string);
+                    printError(0, 0, "Float conversion has failed");
+                    return ERR_INTERNAL;
+                }
+                token->type = TOKEN_FLOAT;
+                token->value.decimal = value;
+                tokenComplete = true;
+            }
+            break;
+        case STATE_STRING:
+            if (c < 32)
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "String contains unsupported character(s)");
+                return ERR_LEXICAL_AN; 
+            }
+            else if (c == '\"')
+            {
+                token->type = TOKEN_STRING;
+                tokenComplete = true;
+            }
+            else if (c == '\\')
+            {
+                state = STATE_STRING_ESCAPE;
+            }
+            else 
+            {
+                vStrAppend(&string, c);
+            }
+            break;
+        case STATE_STRING_ESCAPE:
+            switch (c)
+            {
+            case '\\':
+                state = STATE_STRING;
+                vStrAppend(&string, '\\');
+                break;
+            case '\"':
+                state = STATE_STRING;
+                vStrAppend(&string, '\"');
+                break;
+            case 'n':
+                state = STATE_STRING;
+                vStrAppend(&string, '\n');
+                break;
+            case 't':
+                state = STATE_STRING;
+                vStrAppend(&string, '\t');
+                break;
+            case '$':
+                state = STATE_STRING;
+                vStrAppend(&string, c);
+                break;
+            case 'x':
+                state = STATE_STRING_HEXA_0;
+                break;
+            default:
+                if (c >= '0' && c <= '3')
+                {
+                    octa[0] = c;
+                    state = STATE_STRING_OCTA_0;
+                }
+                else
+                {
+                    vStrFree(&string);
+                    printError(token->pos.line, token->pos.character, "Invalid escape sequence");
+                    return ERR_LEXICAL_AN; 
+                }
+            }
+            break;
+        case STATE_STRING_HEXA_0:
+            if (isxdigit(c))
+            {
+                hexa[0] = c;
+                state = STATE_STRING_HEXA_1;
+            }
+            else 
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Invalid hexadecimal sequence");
+                return ERR_LEXICAL_AN; 
+            }
+            break;
+        case STATE_STRING_HEXA_1:
+            if (isxdigit(c))
+            {
+                state = STATE_STRING;
+                hexa[1] = c;
+                hexa[2] = '\0';
+                char *endPtr = NULL;
+                long value = strtol(hexa, endPtr, 16);
+                if (*endPtr != '\0')
+                {
+                    vStrFree(&string);
+                    printError(0, 0, "Hexadecimal conversion has failed");
+                    return ERR_INTERNAL;
+                }
+                vStrAppend(&string, value);
+            }
+            break;
+        case STATE_STRING_OCTA_0:
+            if (c >= '0' && c <= '7')
+            {
+                octa[1] = c;
+                state = STATE_STRING_OCTA_1;
+            }
+            else
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Invalid octal sequence");
+                return ERR_LEXICAL_AN; 
+            }
+            break;
+        case STATE_STRING_OCTA_1:
+            if (c >= '0' && c <= '7')
+            {
+                state = STATE_STRING;
+                octa[2] = c;
+                octa[3] = '\0';
+                char *endPtr = NULL;
+                long value = strtol(octa, endPtr, 8);
+                if (*endPtr != '\0')
+                {
+                    vStrFree(&string);
+                    printError(0, 0, "Octal conversion has failed");
+                    return ERR_INTERNAL;
+                }
+                vStrAppend(&string, value);
             }
             break;
         case STATE_SLASH:
