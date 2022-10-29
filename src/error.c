@@ -10,7 +10,7 @@
 void printError(int line, int ch, char *message)
 {
     if (line > 0)
-        fprintf(stderr, "%d:%d\tError: %s", line, ch, message);
+        fprintf(stderr, "%d:%d\tError: %s\n", line, ch, message);
     else
-        fprintf(stderr, "Error: %s", message);
+        fprintf(stderr, "Error: %s\n", message);
 }

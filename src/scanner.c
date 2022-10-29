@@ -5,6 +5,7 @@
  */
 
 #include <ctype.h>
+#include <string.h>
 #include <stdlib.h>
 #include "scanner.h"
 #include "error.h"
@@ -143,7 +144,7 @@ int getToken(Token *token)
             case '.':
                 token->type = TOKEN_CONCAT;
                 tokenComplete = true;
-                break;                
+                break;
             case EOF:
                 token->type = TOKEN_EOF;
                 tokenComplete = true;
@@ -188,7 +189,7 @@ int getToken(Token *token)
                 else
                 {
                     vStrFree(&string);
-                    printError(token->pos.line, token->pos.character, "Unknown lexeme");
+                    printError(token->pos.line, token->pos.character, "Unknown token found");
                     return ERR_LEXICAL_AN;
                 }
                 break;
@@ -220,9 +221,9 @@ int getToken(Token *token)
             else
             {
                 vStrFree(&string);
-                printError(token->pos.line, token->pos.character, "Unknown lexeme");
+                printError(token->pos.line, token->pos.character, "Unknown token found");
                 return ERR_LEXICAL_AN;
-            }   
+            }
             break;
         case STATE_NOT_EQUAL_1:
             if (c == '=')
@@ -233,15 +234,16 @@ int getToken(Token *token)
             else
             {
                 vStrFree(&string);
-                printError(token->pos.line, token->pos.character, "Unknown lexeme, did you mean to use '!=='?");
+                printError(token->pos.line, token->pos.character, "Unknown token found, did you mean to use '!=='?");
                 return ERR_LEXICAL_AN;
-            }   
+            }
             break;
         case STATE_EQUAL_OR_ASSIGN:
             if (c != '=')
             {
-                token->type = TOKEN_ASSIGN;
                 ungetc(c, sourceFile);
+                token->type = TOKEN_ASSIGN;
+                tokenComplete = true;
             }
             else
             {
@@ -257,7 +259,7 @@ int getToken(Token *token)
             else
             {
                 vStrFree(&string);
-                printError(token->pos.line, token->pos.character, "Unknown lexeme, did you mean to use '==='?");
+                printError(token->pos.line, token->pos.character, "Unknown token found, did you mean to use '==='?");
                 return ERR_LEXICAL_AN;
             }
             break;
@@ -309,7 +311,7 @@ int getToken(Token *token)
                 state = STATE_FLOAT_0;
             }
             else if (c == 'e' || c == 'E')
-            {   
+            {
                 vStrAppend(&string, c);
                 state = STATE_FLOAT_E_0;
             }
@@ -317,7 +319,7 @@ int getToken(Token *token)
             {
                 char *endPtr = NULL;
                 ungetc(c, sourceFile);
-                unsigned long value = strtoul((&string)->content, endPtr, 10);
+                unsigned long value = strtoul((&string)->content, &endPtr, 10);
                 if (*endPtr != '\0')
                 {
                     vStrFree(&string);
@@ -338,7 +340,7 @@ int getToken(Token *token)
             else
             {
                 vStrFree(&string);
-                printError(token->pos.line, token->pos.character, "Unknown lexeme, dot must be followed by a digit");
+                printError(token->pos.line, token->pos.character, "Unknown token found, dot must be followed by a digit");
                 return ERR_LEXICAL_AN;
             }
             break;
@@ -356,7 +358,7 @@ int getToken(Token *token)
             {
                 char *endPtr = NULL;
                 ungetc(c, sourceFile);
-                double value = strtod((&string)->content, endPtr);
+                double value = strtod((&string)->content, &endPtr);
                 if (*endPtr != '\0')
                 {
                     vStrFree(&string);
@@ -382,8 +384,8 @@ int getToken(Token *token)
             else
             {
                 vStrFree(&string);
-                printError(token->pos.line, token->pos.character, "Unknown lexeme, exponent must be followed by a (signed) digit");
-                return ERR_LEXICAL_AN; 
+                printError(token->pos.line, token->pos.character, "Unknown token found, exponent must be followed by a (signed) digit");
+                return ERR_LEXICAL_AN;
             }
             break;
         case STATE_FLOAT_E_1:
@@ -395,7 +397,7 @@ int getToken(Token *token)
             {
                 char *endPtr = NULL;
                 ungetc(c, sourceFile);
-                double value = strtod((&string)->content, endPtr);
+                double value = strtod((&string)->content, &endPtr);
                 if (*endPtr != '\0')
                 {
                     vStrFree(&string);
@@ -412,7 +414,7 @@ int getToken(Token *token)
             {
                 vStrFree(&string);
                 printError(token->pos.line, token->pos.character, "String contains unsupported character(s)");
-                return ERR_LEXICAL_AN; 
+                return ERR_LEXICAL_AN;
             }
             else if (c == '\"')
             {
@@ -423,7 +425,7 @@ int getToken(Token *token)
             {
                 state = STATE_STRING_ESCAPE;
             }
-            else 
+            else
             {
                 vStrAppend(&string, c);
             }
@@ -464,7 +466,7 @@ int getToken(Token *token)
                 {
                     vStrFree(&string);
                     printError(token->pos.line, token->pos.character, "Invalid escape sequence");
-                    return ERR_LEXICAL_AN; 
+                    return ERR_LEXICAL_AN;
                 }
             }
             break;
@@ -474,11 +476,11 @@ int getToken(Token *token)
                 hexa[0] = c;
                 state = STATE_STRING_HEXA_1;
             }
-            else 
+            else
             {
                 vStrFree(&string);
                 printError(token->pos.line, token->pos.character, "Invalid hexadecimal sequence");
-                return ERR_LEXICAL_AN; 
+                return ERR_LEXICAL_AN;
             }
             break;
         case STATE_STRING_HEXA_1:
@@ -488,7 +490,7 @@ int getToken(Token *token)
                 hexa[1] = c;
                 hexa[2] = '\0';
                 char *endPtr = NULL;
-                long value = strtol(hexa, endPtr, 16);
+                long value = strtol(hexa, &endPtr, 16);
                 if (*endPtr != '\0')
                 {
                     vStrFree(&string);
@@ -508,7 +510,7 @@ int getToken(Token *token)
             {
                 vStrFree(&string);
                 printError(token->pos.line, token->pos.character, "Invalid octal sequence");
-                return ERR_LEXICAL_AN; 
+                return ERR_LEXICAL_AN;
             }
             break;
         case STATE_STRING_OCTA_1:
@@ -518,7 +520,7 @@ int getToken(Token *token)
                 octa[2] = c;
                 octa[3] = '\0';
                 char *endPtr = NULL;
-                long value = strtol(octa, endPtr, 8);
+                long value = strtol(octa, &endPtr, 8);
                 if (*endPtr != '\0')
                 {
                     vStrFree(&string);
