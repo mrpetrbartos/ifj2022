@@ -1,0 +1,19 @@
+name: test
+
+on:
+  push:
+    branches: [ master ]
+  pull_request:
+    branches: [ master ]
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v1
+    - name: Configure
+      run: mkdir cmake-build && cd cmake-build && cmake ../
+    - name: Make
+      run: cd cmake-build && make all
+    - name: Run Test
+      run: cd cmake-build && ctest --verbose
