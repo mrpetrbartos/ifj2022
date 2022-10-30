@@ -149,6 +149,9 @@ int getToken(Token *token)
                 token->type = TOKEN_EOF;
                 tokenComplete = true;
                 break;
+            case '?':
+                token->type = TOKEN_OPTIONAL_TYPE;
+                tokenComplete = true;
             case '=':
                 state = STATE_EQUAL_OR_ASSIGN;
                 break;
