@@ -123,6 +123,8 @@ TEST_F(ScannerTest, Unknown2)
     TestSc(input, result, 1);
 }
 
+//Scanner string tests
+
 TEST_F(ScannerTest, StringAssignment)
 {
     std::string input = "$a = \"Ahoj Kamil\";";
@@ -150,8 +152,8 @@ TEST_F(ScannerTest, StringAssignment)
     TestSc(input, result, 1);
 }
 
+//Scanner math tests
 
-//Math tests
 TEST_F(ScannerTest, IntegerAssignment)
 {
     std::string input = "$i = 256;";
@@ -262,7 +264,7 @@ TEST_F(ScannerTest, Division)
     TestSc(input, result, 0);
 }
 
-//Escape sequence test cases TODO
+//Scanner escape sequence tests TODO
 
 TEST_F(ScannerTest, EscapeSequenceString)
 {
@@ -278,7 +280,7 @@ TEST_F(ScannerTest, EscapeSequenceString)
     TestSc(input, result, 0);
 }
 
-/* test template
+/* scanner test template
 TEST_F(ScannerTest, TestName)
 {
     std::string input = "";
@@ -292,5 +294,3 @@ TEST_F(ScannerTest, TestName)
     TestSc(input, result, 0);
 }
 */
-
-//ted jsem v branchi tests
