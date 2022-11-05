@@ -292,3 +292,5 @@ TEST_F(ScannerTest, TestName)
     TestSc(input, result, 0);
 }
 */
+
+//ted jsem v branchi tests
