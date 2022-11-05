@@ -136,3 +136,159 @@ TEST_F(ScannerTest, StringAssignment)
 
     TestSc(input, result, 0);
 }
+
+TEST_F(ScannerTest, StringAssignment)
+{
+    std::string input = "$b = \"Ahoj Frajer;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "b"}),
+        ScannedToken(TOKEN_ASSIGN),
+        
+    };
+
+    TestSc(input, result, 1);
+}
+
+
+//Math tests
+TEST_F(ScannerTest, IntegerAssignment)
+{
+    std::string input = "$i = 256;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "i"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_INT, {.integer = 256}),
+        ScannedToken(TOKEN_SEMICOLON),
+        
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, FloatAssignment)
+{
+    std::string input = "$f = 0.256;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "f"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_FLOAT, {.decimal = 0.256}),
+        ScannedToken(TOKEN_SEMICOLON),
+        
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, FloatAssignment)
+{
+    std::string input = "$f = 0,256;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "f"}),
+        ScannedToken(TOKEN_ASSIGN),  
+    };
+
+    TestSc(input, result, 1);
+}
+
+TEST_F(ScannerTest, Addition)
+{
+    std::string input = "$num = 4.5 + 6;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "num"}),
+        ScannedToken(TOKEN_ASSIGN), 
+        ScannedToken(TOKEN_FLOAT, {.decimal = 4.5}),
+        ScannedToken(TOKEN_PLUS),
+        ScannedToken(TOKEN_INT, {.integer = 6}),
+        ScannedToken(TOKEN_SEMICOLON),
+        
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, Addition)
+{
+    std::string input = "$num = $num + 6;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "num"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "num"}),
+        ScannedToken(TOKEN_PLUS),
+        ScannedToken(TOKEN_INT, {.integer = 6}),
+        ScannedToken(TOKEN_SEMICOLON),
+        
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, Multiplication)
+{
+    std::string input = "$x = $y * 2;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "x"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "y"}),
+        ScannedToken(TOKEN_MULTIPLY),
+        ScannedToken(TOKEN_INT, {.integer = 2}),
+        ScannedToken(TOKEN_SEMICOLON),
+        
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, Division)
+{
+    std::string input = "$x = $y / 2;";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "x"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "y"}),
+        ScannedToken(TOKEN_DIVIDE),
+        ScannedToken(TOKEN_INT, {.integer = 2}),
+        ScannedToken(TOKEN_SEMICOLON),
+        
+    };
+
+    TestSc(input, result, 0);
+}
+
+//Escape sequence test cases TODO
+
+TEST_F(ScannerTest, EscapeSequenceString)
+{
+    std::string input = "$a= \"Ahoj \n Kamil\";";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "a"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_STRING, {.string = "Ahoj \\n Kamil"}),
+        ScannedToken(TOKEN_SEMICOLON),
+    };
+
+    TestSc(input, result, 0);
+}
+
+/* test template
+TEST_F(ScannerTest, TestName)
+{
+    std::string input = "";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = ""}),
+        ScannedToken(TOKEN_ASSIGN),
+        
+    };
+
+    TestSc(input, result, 0);
+}
+*/
