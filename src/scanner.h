@@ -23,6 +23,7 @@ typedef enum
     STATE_VARID,
     STATE_IDENTIFIER,
     STATE_SLASH,
+    STATE_OPTIONAL,
     STATE_LINE_COM,
     STATE_MULTILINE_COM,
     STATE_POT_MULTILINE_END,
@@ -60,6 +61,7 @@ typedef enum
     TOKEN_IDENTIFIER,
     TOKEN_KEYWORD,
     TOKEN_OPTIONAL_TYPE,
+    TOKEN_CLOSING_TAG,
 
     TOKEN_INT,
     TOKEN_FLOAT,
@@ -126,5 +128,12 @@ int getToken(Token *token);
  * @param f Pointer to source file.
  */
 void setSourceFile(FILE *f);
+
+/**
+ * @brief Checks whether a prologue is present;
+ *
+ * @return int 0 if prologue was found successfully, non-zero value otherwise.
+ */
+int initialScan();
 
 #endif

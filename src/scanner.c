@@ -71,6 +71,51 @@ void checkKeyword(Token *token, vStr *string)
     }
 }
 
+int initialScan()
+{
+    vStr string;
+    int c;
+
+    if (!vStrInit(&string))
+    {
+        printError(0, 0, "Couldn't initialize string");
+        return ERR_INTERNAL;
+    }
+
+    while (!isspace(c = getc(sourceFile)))
+    {
+        vStrAppend(&string, c);
+    }
+    if (strcmp((&string)->content, "<?php") || !isspace(c))
+    {
+        vStrFree(&string);
+        printError(0, 0, "The program has to start with a prologue, missing opening tag");
+        return ERR_LEXICAL_AN;
+    }
+
+    vStrFree(&string);
+
+    if (!vStrInit(&string))
+    {
+        printError(0, 0, "Couldn't initialize string");
+        return ERR_INTERNAL;
+    }
+
+    while ((c = getc(sourceFile)) != ';')
+    {
+        vStrAppend(&string, c);
+    }
+    if (strcmp((&string)->content, "declare(strict_types=1)") || (c != ';'))
+    {
+        vStrFree(&string);
+        printError(0, 0, "The program has to start with a prologue, missing declare");
+        return ERR_LEXICAL_AN;
+    }
+
+    vStrFree(&string);
+    return 0;
+}
+
 int getToken(Token *token)
 {
     vStr string;
@@ -150,8 +195,8 @@ int getToken(Token *token)
                 tokenComplete = true;
                 break;
             case '?':
-                token->type = TOKEN_OPTIONAL_TYPE;
-                tokenComplete = true;
+                state = STATE_OPTIONAL;
+                break;
             case '=':
                 state = STATE_EQUAL_OR_ASSIGN;
                 break;
@@ -214,6 +259,16 @@ int getToken(Token *token)
             else
             {
                 token->type = TOKEN_GREATER_THAN;
+                ungetc(c, sourceFile);
+            }
+            tokenComplete = true;
+            break;
+        case STATE_OPTIONAL:
+            if (c == '>')
+                token->type = TOKEN_CLOSING_TAG;
+            else
+            {
+                token->type = TOKEN_OPTIONAL_TYPE;
                 ungetc(c, sourceFile);
             }
             tokenComplete = true;
