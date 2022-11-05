@@ -12,6 +12,35 @@
 
 typedef enum
 {
+    STATE_INITIAL,
+    STATE_LESSTHAN,
+    STATE_GREATERTHAN,
+    STATE_EQUAL_OR_ASSIGN,
+    STATE_NOT_EQUAL_0,
+    STATE_NOT_EQUAL_1,
+    STATE_EQUAL,
+    STATE_VARID_PREFIX,
+    STATE_VARID,
+    STATE_IDENTIFIER,
+    STATE_SLASH,
+    STATE_OPTIONAL,
+    STATE_LINE_COM,
+    STATE_MULTILINE_COM,
+    STATE_POT_MULTILINE_END,
+    STATE_NUMBER,
+    STATE_FLOAT_0,
+    STATE_FLOAT_1,
+    STATE_FLOAT_E_0,
+    STATE_FLOAT_E_1,
+    STATE_STRING,
+    STATE_STRING_ESCAPE,
+    STATE_STRING_HEXA_0,
+    STATE_STRING_HEXA_1,
+    STATE_STRING_OCTA_0,
+    STATE_STRING_OCTA_1
+} State;
+typedef enum
+{
     KW_ELSE,
     KW_FLOAT,
     KW_FUNCTION,
@@ -31,6 +60,8 @@ typedef enum
     TOKEN_EMPTY,
     TOKEN_IDENTIFIER,
     TOKEN_KEYWORD,
+    TOKEN_OPTIONAL_TYPE,
+    TOKEN_CLOSING_TAG,
 
     TOKEN_INT,
     TOKEN_FLOAT,
@@ -41,6 +72,8 @@ typedef enum
     TOKEN_MINUS,
     TOKEN_MULTIPLY,
     TOKEN_DIVIDE,
+
+    TOKEN_ASSIGN,
 
     TOKEN_CONCAT,
 
@@ -54,13 +87,15 @@ typedef enum
 
     TOKEN_LEFT_BRACKET,
     TOKEN_RIGHT_BRACKET,
+    TOKEN_LEFT_BRACE,
+    TOKEN_RIGHT_BRACE,
     TOKEN_COMMA,
     TOKEN_SEMICOLON,
 } TokenType;
 
 typedef union
 {
-    vStr *string;
+    vStr string;
     int integer;
     Keyword keyword;
     double decimal;
@@ -93,5 +128,12 @@ int getToken(Token *token);
  * @param f Pointer to source file.
  */
 void setSourceFile(FILE *f);
+
+/**
+ * @brief Checks whether a prologue is present;
+ *
+ * @return int 0 if prologue was found successfully, non-zero value otherwise.
+ */
+int initialScan();
 
 #endif
