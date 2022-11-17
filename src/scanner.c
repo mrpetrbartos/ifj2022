@@ -341,7 +341,7 @@ int getToken(Token *token)
                 vStrAppend(&string, c);
             else
             {
-                token->type = TOKEN_IDENTIFIER;
+                token->type = TOKEN_IDENTIFIER_VAR;
                 tokenComplete = true;
                 ungetc(c, sourceFile);
             }
@@ -355,7 +355,7 @@ int getToken(Token *token)
                 checkKeyword(token, &string);
                 if (token->type != TOKEN_KEYWORD)
                 {
-                    token->type = TOKEN_IDENTIFIER;
+                    token->type = TOKEN_IDENTIFIER_FUNC;
                 }
                 tokenComplete = true;
             }
@@ -670,7 +670,7 @@ int getToken(Token *token)
         }
     }
 
-    if (token->type == TOKEN_STRING || token->type == TOKEN_IDENTIFIER)
+    if (token->type == TOKEN_STRING || token->type == TOKEN_IDENTIFIER_VAR || token->type == TOKEN_IDENTIFIER_FUNC)
         token->value.string = string;
     else
         vStrFree(&string);
