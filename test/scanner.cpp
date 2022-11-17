@@ -300,7 +300,7 @@ TEST_F(ScannerTest, EscapeSequenceString3)
 
 TEST_F(ScannerTest, IfCondition)
 {
-    std::string input = "if ($a > $b) { echo \"a is greater than b\" } else { echo \"a is lesser or equal to b\" };";
+    std::string input = "if ($a > $b) { echo \"a is greater than b\"; } else { echo \"a is lesser or equal to b\"; }";
 
     auto result = std::list<ScannedToken>{
         ScannedToken(TOKEN_KEYWORD, {.keyword = KW_IF}),
@@ -312,13 +312,14 @@ TEST_F(ScannerTest, IfCondition)
         ScannedToken(TOKEN_LEFT_BRACE),
         ScannedToken(TOKEN_IDENTIFIER, {.string  = "echo"}),
         ScannedToken(TOKEN_STRING, {.string = "a is greater than b"}),
+        ScannedToken(TOKEN_SEMICOLON),
         ScannedToken(TOKEN_RIGHT_BRACE),
         ScannedToken(TOKEN_KEYWORD, {.keyword = KW_ELSE}),
         ScannedToken(TOKEN_LEFT_BRACE),
         ScannedToken(TOKEN_IDENTIFIER, {.string  = "echo"}),
         ScannedToken(TOKEN_STRING, {.string = "a is lesser or equal to b"}),
-        ScannedToken(TOKEN_RIGHT_BRACE),
         ScannedToken(TOKEN_SEMICOLON),
+        ScannedToken(TOKEN_RIGHT_BRACE),
 
     };
 
@@ -327,11 +328,7 @@ TEST_F(ScannerTest, IfCondition)
 
 TEST_F(ScannerTest, WhileLoop)
 {
-<<<<<<< HEAD
     std::string input = "while ( $c !== 100 ) { $c = $c + 1; }"; 
-=======
-    std::string input = "while ( $c !== 100 ) { $c = $c + 1 };"; 
->>>>>>> ecc8f7bcc0da04c6b982faa97529740e93dc1418
 
     auto result = std::list<ScannedToken>{
         ScannedToken(TOKEN_KEYWORD, {.keyword = KW_WHILE}),
@@ -346,19 +343,13 @@ TEST_F(ScannerTest, WhileLoop)
         ScannedToken(TOKEN_IDENTIFIER, {.string = "c"}),
         ScannedToken(TOKEN_PLUS),
         ScannedToken(TOKEN_INT, {.integer = 1}),
-<<<<<<< HEAD
         ScannedToken(TOKEN_SEMICOLON),
         ScannedToken(TOKEN_RIGHT_BRACE),
-=======
-        ScannedToken(TOKEN_RIGHT_BRACE),
-        ScannedToken(TOKEN_SEMICOLON),
->>>>>>> ecc8f7bcc0da04c6b982faa97529740e93dc1418
     };
 
     TestSc(input, result, 0);
 }
 
-<<<<<<< HEAD
 /* 'for loop' implementation is optional and yet to be implemented
 TEST_F(ScannerTest, ForLoop)
 {
@@ -387,19 +378,10 @@ TEST_F(ScannerTest, ForLoop)
         ScannedToken(TOKEN_SEMICOLON),
         ScannedToken(TOKEN_RIGHT_BRACE),
 
-=======
-TEST_F(ScannerTest, ForLoop)
-{
-    std::string input = "";
-
-    auto result = std::list<ScannedToken>{
-        //TODO
->>>>>>> ecc8f7bcc0da04c6b982faa97529740e93dc1418
     };
 
     TestSc(input, result, 0);
 }
-<<<<<<< HEAD
 */
 /*
 TEST_F(ScannerTest, FunctionDeclaration)
@@ -428,9 +410,6 @@ TEST_F(ScannerTest, FunctionDeclaration)
     TestSc(input, result, 0);
 }
 */
-=======
-
->>>>>>> ecc8f7bcc0da04c6b982faa97529740e93dc1418
 /* scanner test template
 TEST_F(ScannerTest, TestName)
 {
