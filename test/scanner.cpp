@@ -296,7 +296,49 @@ TEST_F(ScannerTest, EscapeSequenceString3)
     TestSc(input, result, 0);
 }
 
-//Scanner loops and conditional expressions tests TODO
+TEST_F(ScannerTest, EscapeSequenceString4) // octal notation
+{
+    std::string input = "$str = \"This should be empty: \\000, this is a tilde: \\176 and this is a number: \\999\";";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "str"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_STRING, {.string = "This should be empty: \000, this is a tilde: \176 and this is a number: 999"}),
+        ScannedToken(TOKEN_SEMICOLON),
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, EscapeSequenceString5) // hexadecimal notation
+{
+    std::string input = "$str = \"This should be empty: \\x00, this is a tilde: \\x7E and these are multiple characters: \\xdd\";";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "str"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_STRING, {.string = "This should be empty: \x00, this is a tilde: \x7E and these are multiple characters: xdd"}),
+        ScannedToken(TOKEN_SEMICOLON),
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, EscapeSequenceString6)
+{
+    std::string input = "$str = \"\141\x61,\\$\\x24\\n,\\x7E\\176,\\173\\x7D,\\xfj,\\999\\000\";";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "str"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_STRING, {.string = "aa,00,$$\n,~~,{},xfj,999000"}),
+        ScannedToken(TOKEN_SEMICOLON),
+    };
+
+    TestSc(input, result, 0);
+}
+
+//Scanner loops and conditional expressions tests
 
 TEST_F(ScannerTest, IfCondition)
 {
