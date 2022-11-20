@@ -522,9 +522,9 @@ int getToken(Token *token)
                 }
                 else
                 {
-                    vStrFree(&string);
-                    printError(token->pos.line, token->pos.character, "Invalid escape sequence");
-                    return ERR_LEXICAL_AN;
+                    vStrAppend(&string, '\\');
+                    ungetc(c, sourceFile);
+                    state = STATE_STRING;
                 }
             }
             break;
@@ -536,13 +536,22 @@ int getToken(Token *token)
             }
             else
             {
-                vStrFree(&string);
-                printError(token->pos.line, token->pos.character, "Invalid hexadecimal sequence");
-                return ERR_LEXICAL_AN;
+                vStrAppend(&string, '\\');
+                vStrAppend(&string, 'x');
+                ungetc(c, sourceFile);
+                state = STATE_STRING;
             }
             break;
         case STATE_STRING_HEXA_1:
-            if (isxdigit(c))
+            if (!isxdigit(c) || (hexa[0] == '0' && c == '0'))
+            {
+                vStrAppend(&string, '\\');
+                vStrAppend(&string, 'x');
+                vStrAppend(&string, hexa[0]);
+                ungetc(c, sourceFile);
+                state = STATE_STRING;
+            }
+            else
             {
                 state = STATE_STRING;
                 hexa[1] = c;
@@ -566,13 +575,22 @@ int getToken(Token *token)
             }
             else
             {
-                vStrFree(&string);
-                printError(token->pos.line, token->pos.character, "Invalid octal sequence");
-                return ERR_LEXICAL_AN;
+                vStrAppend(&string, '\\');
+                vStrAppend(&string, octa[0]);
+                ungetc(c, sourceFile);
+                state = STATE_STRING;
             }
             break;
         case STATE_STRING_OCTA_1:
-            if (c >= '0' && c <= '7')
+            if ((octa[0] == '0' && octa[1] == '0' && c == '0') || (c > '7'))
+            {
+                vStrAppend(&string, '\\');
+                vStrAppend(&string, octa[0]);
+                vStrAppend(&string, octa[1]);
+                ungetc(c, sourceFile);
+                state = STATE_STRING;
+            }
+            else if (c >= '0' && c <= '7')
             {
                 state = STATE_STRING;
                 octa[2] = c;
