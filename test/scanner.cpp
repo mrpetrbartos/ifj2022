@@ -270,7 +270,7 @@ TEST_F(ScannerTest, EscapeSequenceString)
 
 TEST_F(ScannerTest, EscapeSequenceString2)
 {
-    std::string input = "$a= \"Kamil ma \$wag\";";
+    std::string input = "$a= \"Kamil ma \\$wag\";";
 
     auto result = std::list<ScannedToken>{
         ScannedToken(TOKEN_IDENTIFIER, {.string = "a"}),
