@@ -1,5 +1,5 @@
 /**
- * @file vstr.h
+ * @file vstr.c
  * @author Petr Bartoš (xbarto0g)
  * @brief Implementation of custom variable-length string.
  */
