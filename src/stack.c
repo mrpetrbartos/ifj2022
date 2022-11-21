@@ -27,12 +27,14 @@ void stackPush(Stack *s, Token t)
     ++(s->len);
 }
 
-void stackPop(Stack *s)
+void stackPop(Stack *s, Token *t)
 {
     if (s == NULL || s->head == NULL)
         return;
 
     StackItem *tmp = s->head;
+    if (t != NULL)
+        *t = tmp->t;
     s->head = s->head->next;
     free(tmp);
     --(s->len);

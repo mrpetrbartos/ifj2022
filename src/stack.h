@@ -40,14 +40,15 @@ void stackPush(Stack *s, Token t);
  * @brief Pops a token from the top of the stack.
  *
  * @param s Pointer to a stack.
+ * @param t Variable to pop the token to (can be NULL).
  */
-void stackPop(Stack *s);
+void stackPop(Stack *s, Token *t);
 
 /**
  * @brief Removes all tokens from the stack.
  *
  * @param s Pointer to a stack.
  */
-void stackClear(Stack *s);
+void stackFree(Stack *s);
 
 #endif
