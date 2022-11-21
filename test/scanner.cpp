@@ -83,6 +83,9 @@ void ScannerTest::TestSc(std::string &input, std::list<ScannedToken> &tokens, in
         case TOKEN_IDENTIFIER:
             ASSERT_STREQ(scannedToken.value.string.content, expectedToken.data.string);
             break;
+        case TOKEN_STRING:
+            ASSERT_STREQ(scannedToken.value.string.content, expectedToken.data.string);
+            break;
         case TOKEN_KEYWORD:
             ASSERT_EQ(scannedToken.value.keyword, expectedToken.data.keyword);
             break;
@@ -123,7 +126,7 @@ TEST_F(ScannerTest, Unknown2)
     TestSc(input, result, 1);
 }
 
-//Scanner string tests
+// Scanner string tests
 
 TEST_F(ScannerTest, StringAssignment)
 {
@@ -146,13 +149,13 @@ TEST_F(ScannerTest, StringAssignment2)
     auto result = std::list<ScannedToken>{
         ScannedToken(TOKEN_IDENTIFIER, {.string = "b"}),
         ScannedToken(TOKEN_ASSIGN),
-        
+
     };
 
     TestSc(input, result, 1);
 }
 
-//Scanner math tests
+// Scanner math tests
 
 TEST_F(ScannerTest, IntegerAssignment)
 {
@@ -163,7 +166,7 @@ TEST_F(ScannerTest, IntegerAssignment)
         ScannedToken(TOKEN_ASSIGN),
         ScannedToken(TOKEN_INT, {.integer = 256}),
         ScannedToken(TOKEN_SEMICOLON),
-        
+
     };
 
     TestSc(input, result, 0);
@@ -178,7 +181,7 @@ TEST_F(ScannerTest, FloatAssignment)
         ScannedToken(TOKEN_ASSIGN),
         ScannedToken(TOKEN_FLOAT, {.decimal = 0.256}),
         ScannedToken(TOKEN_SEMICOLON),
-        
+
     };
 
     TestSc(input, result, 0);
@@ -190,12 +193,12 @@ TEST_F(ScannerTest, Addition)
 
     auto result = std::list<ScannedToken>{
         ScannedToken(TOKEN_IDENTIFIER, {.string = "num"}),
-        ScannedToken(TOKEN_ASSIGN), 
+        ScannedToken(TOKEN_ASSIGN),
         ScannedToken(TOKEN_FLOAT, {.decimal = 4.5}),
         ScannedToken(TOKEN_PLUS),
         ScannedToken(TOKEN_INT, {.integer = 6}),
         ScannedToken(TOKEN_SEMICOLON),
-        
+
     };
 
     TestSc(input, result, 0);
@@ -212,7 +215,7 @@ TEST_F(ScannerTest, Addition2)
         ScannedToken(TOKEN_PLUS),
         ScannedToken(TOKEN_INT, {.integer = 6}),
         ScannedToken(TOKEN_SEMICOLON),
-        
+
     };
 
     TestSc(input, result, 0);
@@ -229,7 +232,7 @@ TEST_F(ScannerTest, Multiplication)
         ScannedToken(TOKEN_MULTIPLY),
         ScannedToken(TOKEN_INT, {.integer = 2}),
         ScannedToken(TOKEN_SEMICOLON),
-        
+
     };
 
     TestSc(input, result, 0);
@@ -246,13 +249,13 @@ TEST_F(ScannerTest, Division)
         ScannedToken(TOKEN_DIVIDE),
         ScannedToken(TOKEN_INT, {.integer = 2}),
         ScannedToken(TOKEN_SEMICOLON),
-        
+
     };
 
     TestSc(input, result, 0);
 }
 
-//Scanner escape sequence tests
+// Scanner escape sequence tests
 
 TEST_F(ScannerTest, EscapeSequenceString)
 {
@@ -270,7 +273,7 @@ TEST_F(ScannerTest, EscapeSequenceString)
 
 TEST_F(ScannerTest, EscapeSequenceString2)
 {
-    std::string input = "$a= \"Kamil ma \$wag\";";
+    std::string input = "$a= \"Kamil ma \\$wag\";";
 
     auto result = std::list<ScannedToken>{
         ScannedToken(TOKEN_IDENTIFIER, {.string = "a"}),
@@ -296,7 +299,49 @@ TEST_F(ScannerTest, EscapeSequenceString3)
     TestSc(input, result, 0);
 }
 
-//Scanner loops and conditional expressions tests TODO
+TEST_F(ScannerTest, EscapeSequenceString4) // octal notation
+{
+    std::string input = "$str = \"This shouldn't be empty: \\000, this is a tilde: \\176 and this is a slash with a number: \\999\";";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "str"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_STRING, {.string = "This shouldn't be empty: \\000, this is a tilde: \176 and this is a slash with a number: \\999"}),
+        ScannedToken(TOKEN_SEMICOLON),
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, EscapeSequenceString5) // hexadecimal notation
+{
+    std::string input = "$str = \"This shouldn't be empty: \\x00, this is a tilde: \\x7E and this is...something: \\xdd\";";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "str"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_STRING, {.string = "This shouldn't be empty: \\x00, this is a tilde: \x7E and this is...something: \xdd"}),
+        ScannedToken(TOKEN_SEMICOLON),
+    };
+
+    TestSc(input, result, 0);
+}
+
+TEST_F(ScannerTest, EscapeSequenceString6)
+{
+    std::string input = "$str = \"\141\x61,\\$\\x24\\n,\\x7E\\176,\\173\\x7D,\\xfj,\\x00,\\xff,\\x01,\\377,\\378,\\001,\\000\";";
+
+    auto result = std::list<ScannedToken>{
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "str"}),
+        ScannedToken(TOKEN_ASSIGN),
+        ScannedToken(TOKEN_STRING, {.string = "aa,$$\n,~~,{},\\xfj,\\x00,\xff,\x01,\377,\\378,\001,\\000"}),
+        ScannedToken(TOKEN_SEMICOLON),
+    };
+
+    TestSc(input, result, 0);
+}
+
+// Scanner loops and conditional expressions tests
 
 TEST_F(ScannerTest, IfCondition)
 {
@@ -310,13 +355,13 @@ TEST_F(ScannerTest, IfCondition)
         ScannedToken(TOKEN_IDENTIFIER, {.string = "b"}),
         ScannedToken(TOKEN_RIGHT_BRACKET),
         ScannedToken(TOKEN_LEFT_BRACE),
-        ScannedToken(TOKEN_IDENTIFIER, {.string  = "echo"}),
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "echo"}),
         ScannedToken(TOKEN_STRING, {.string = "a is greater than b"}),
         ScannedToken(TOKEN_SEMICOLON),
         ScannedToken(TOKEN_RIGHT_BRACE),
         ScannedToken(TOKEN_KEYWORD, {.keyword = KW_ELSE}),
         ScannedToken(TOKEN_LEFT_BRACE),
-        ScannedToken(TOKEN_IDENTIFIER, {.string  = "echo"}),
+        ScannedToken(TOKEN_IDENTIFIER, {.string = "echo"}),
         ScannedToken(TOKEN_STRING, {.string = "a is lesser or equal to b"}),
         ScannedToken(TOKEN_SEMICOLON),
         ScannedToken(TOKEN_RIGHT_BRACE),
@@ -328,7 +373,7 @@ TEST_F(ScannerTest, IfCondition)
 
 TEST_F(ScannerTest, WhileLoop)
 {
-    std::string input = "while ( $c !== 100 ) { $c = $c + 1; }"; 
+    std::string input = "while ( $c !== 100 ) { $c = $c + 1; }";
 
     auto result = std::list<ScannedToken>{
         ScannedToken(TOKEN_KEYWORD, {.keyword = KW_WHILE}),
