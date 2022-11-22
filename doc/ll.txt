@@ -1,5 +1,5 @@
-<program>   -> <body> EOF
-<program>   -> <body> closing_tag EOF
+<program>   -> <body_main> EOF
+<program>   -> <body_main> closing_tag EOF
 
 <type_p>	-> float
 <type_p>	-> int
@@ -11,11 +11,17 @@
 <return>    -> return <expr>
 <return>    -> return ε
 
+<body_main> -> <body> <body_main>
+<body_main> -> <func_def> <body_main>
+<body_main> -> ε
+
 <body>      -> ε
 <body>      -> <if> <body>
 <body>      -> <while> <body>
 <body>      -> <expr> <body>
-<body>      -> <func_def> <body>
+<body>      -> identifier_var = <expr> <body>
+<body>      -> indentifier_var = <func> <body>
+<body>      -> <func> <body>
 <body>      -> <return> <body>
 
 <if>        -> if <expr> { <body> } else { <body> }
