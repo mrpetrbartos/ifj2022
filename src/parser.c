@@ -32,8 +32,6 @@ void parserDestroy()
 
 int parse()
 {
-    Token t;
-    getToken(&t);
     int parsingCode = parseExpression();
     if (parsingCode != 0)
         return parsingCode;

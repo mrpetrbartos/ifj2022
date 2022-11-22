@@ -14,7 +14,7 @@
 
 #define DOLLAR 500
 #define SHIFT_SYMBOL 501
-#define REDUCED 501
+#define REDUCED 502
 
 typedef enum
 {
@@ -37,6 +37,11 @@ typedef enum
     I_CLOSEB
 } tableIndex;
 
+/**
+ * @brief Parses expression following current token.
+ *
+ * @return int Zero if expression was parsed successfully, non-zero otherwise.
+ */
 int parseExpression();
 
 #endif

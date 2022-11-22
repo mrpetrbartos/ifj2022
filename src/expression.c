@@ -20,6 +20,23 @@ int prec_table[8][8] = {
     {R, R, F, R, R, R, F, R}  // )
 };
 
+Token topmostTerminal()
+{
+    StackItem *tmp = parser.stack->head;
+
+    while (tmp != NULL)
+    {
+        if (tmp->t.type < 501)
+            return tmp->t;
+        else
+            tmp = tmp->next;
+    }
+
+    Token err = {.type = 999};
+
+    return err;
+}
+
 int reduceI()
 {
     Token head = parser.stack->head->t;
@@ -33,11 +50,10 @@ int reduceI()
         }
     }
 
-    // TODO: push instr
-    printf("reduced identifier\n");
-
     Token t;
-    stackPop(parser.stack, NULL);
+    stackPop(parser.stack, &t);
+    // TODO: push instr
+    printf("PUSHS %i\n", t.value.integer);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
     {
@@ -52,10 +68,12 @@ int reduceI()
 
 int reducePlus()
 {
-    // TODO: push instr
-    printf("reduced plus\n");
 
     Token t;
+    stackPop(parser.stack, NULL);
+    stackPop(parser.stack, &t);
+    // TODO: push instr
+    t.type == TOKEN_PLUS ? printf("ADDS\n") : printf("SUBS\n");
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -72,10 +90,11 @@ int reducePlus()
 
 int reduceMultiply()
 {
-    // TODO: push instr
-    printf("reduced multiply\n");
-
     Token t;
+    stackPop(parser.stack, NULL);
+    stackPop(parser.stack, &t);
+    // TODO: push instr
+    t.type == TOKEN_MULTIPLY ? printf("MULS\n") : printf("DIVS\n");
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -92,10 +111,34 @@ int reduceMultiply()
 
 int reduceRelation()
 {
-    // TODO: push instr
-    printf("reduced relational\n");
 
     Token t;
+    stackPop(parser.stack, NULL);
+    stackPop(parser.stack, &t);
+    // TODO: push instr
+    switch (t.type)
+    {
+    case TOKEN_GREATER_EQUAL:
+        printf("GTS\n");
+        printf("EQS\n");
+        break;
+
+    case TOKEN_LESS_EQUAL:
+        printf("LTS\n");
+        printf("EQS\n");
+        break;
+
+    case TOKEN_GREATER_THAN:
+        printf("GTS\n");
+        break;
+
+    case TOKEN_LESS_THAN:
+        printf("LTS\n");
+        break;
+
+    default:
+        break;
+    }
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -112,10 +155,14 @@ int reduceRelation()
 
 int reduceComparison()
 {
-    // TODO: push instr
-    printf("reduced comparison\n");
 
     Token t;
+    stackPop(parser.stack, NULL);
+    stackPop(parser.stack, &t);
+    // TODO: push instr
+    printf("AND");
+    if (t.type == TOKEN_NOT_EQUAL)
+        printf("NOT");
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -132,10 +179,9 @@ int reduceComparison()
 
 int reduceBracket()
 {
-    // TODO: push instr
-    printf("reduced brackets\n");
-
     Token t;
+    stackPop(parser.stack, NULL);
+    stackPop(parser.stack, NULL);
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -191,7 +237,7 @@ precValues getRelation(Token top, Token new)
 
 int reduce()
 {
-    switch (getTableIndex(parser.stack->head->t))
+    switch (getTableIndex(topmostTerminal()))
     {
     case I_DATA:
         return reduceI();
@@ -217,33 +263,66 @@ int reduce()
     }
 }
 
+int shift()
+{
+    Token shift = {.type = SHIFT_SYMBOL};
+    Token topmost = topmostTerminal();
+    StackItem *tmp = parser.stack->head;
+
+    // Prepare stack to temporarily store tokens between
+    // topmost nonterminal and top of the parser stack
+    Stack *putaway = malloc(sizeof(Stack));
+    if (putaway == NULL)
+        return ERR_INTERNAL;
+    stackInit(putaway);
+
+    Token toPush;
+    while (tmp->t.type != topmost.type)
+    {
+        stackPop(parser.stack, &toPush);
+        stackPush(putaway, toPush);
+        tmp = parser.stack->head;
+    }
+
+    // Push the shift symbol and return tokens to parser stack
+    stackPush(parser.stack, shift);
+    while (putaway->head != NULL)
+    {
+        stackPop(putaway, &toPush);
+        stackPush(parser.stack, toPush);
+    }
+
+    free(putaway);
+
+    stackPush(parser.stack, parser.currToken);
+    getToken(&(parser.currToken));
+
+    return 0;
+}
+
 int parseExpression()
 {
     Token bottom = {.type = DOLLAR};
-    Token shift = {.type = SHIFT_SYMBOL};
     stackPush(parser.stack, bottom);
     getToken(&(parser.currToken));
 
     while (true)
     {
-        switch (getRelation(parser.stack->head->t, parser.currToken))
+        switch (getRelation(topmostTerminal(), parser.currToken))
         {
         case (R):
             if (reduce() != 0)
                 return ERR_SYNTAX_AN;
-            getToken(&(parser.currToken));
             break;
 
         case (S):
-            getToken(&(parser.currToken));
-            stackPush(parser.stack, shift);
-            stackPush(parser.stack, parser.currToken);
+            if (shift() != 0)
+                return ERR_INTERNAL;
             break;
 
         case (E):
-            // reduce until reducible by E -> (E)
-            if (reduce() != true)
-                return ERR_SYNTAX_AN;
+            stackPush(parser.stack, parser.currToken);
+            getToken(&(parser.currToken));
             break;
 
         case (O):
