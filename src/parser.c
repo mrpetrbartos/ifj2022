@@ -41,16 +41,20 @@ int checkPrologue()
                          {.type = TOKEN_SEMICOLON}};
 
     Token t;
-    for (int i = 0; i < 8; i++)
+    for (int i = 0; i < 7; i++)
     {
         getToken(&t);
         if (t.type != prologue[i].type)
+        {
+            printf("%i\n", t.type);
             return 1;
+        }
         if (t.type == TOKEN_IDENTIFIER_FUNC)
         {
             if (strcmp(t.value.string.content, prologue[i].value.string.content))
             {
                 vStrFree(&t.value.string);
+                printf("%i\n", i);
                 return 1;
             }
             vStrFree(&t.value.string);
@@ -67,12 +71,9 @@ int checkPrologue()
 
 int parse()
 {
-    int errCode = checkPrologue();
-    if (errCode != 0)
-    {
-        parserDestroy();
-        return errCode;
-    }
+    if (checkPrologue() != 0)
+        return ERR_SYNTAX_AN;
+
     // Insert builtin functions
     symtableAdd(parser.symtable, "floatval", FUNC, 1);
     symtableAdd(parser.symtable, "intval", FUNC, 1);
