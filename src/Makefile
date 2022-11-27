@@ -1,22 +1,23 @@
 CC=gcc
 CFLAGS=-std=gnu99 -Wall -Wextra -Werror
 
-SRCS=$(wildcard *.c)
-HEADERS=$(wildcard *.h)
-OBJS=$(SRCS:%.c=%.o)
+CFILES=$(wildcard *.c)
+HFILES=$(wildcard *.h)
+OFILES=$(CFILES:.c=.o)
+NAME=xbarto0g
 
 all: ifj22
 
-ifj22: $(OBJS)
-	$(CC) $(CFLAGS) -g -o $@ $^ $(LFLAGS)
+ifj22: $(OFILES)
+	$(CC) $(CFLAGS) -g -o $(NAME) $^
 
-%.o: %.c $(HEADERS)
+%.o: %.c $(HFILES)
 	$(CC) $(CFLAGS) -g -c $< -o $@
 
 clean:
 	rm -rf *.o
-	rm ifj22
-	rm xbarto0g.zip
+	rm -f ifj22
+	rm -f $(NAME).zip
 
-pack: $(SRCS) $(HEADERS) Makefile rozdeleni rozsireni
-	zip xbarto0g.zip $^
+pack: $(CFILES) $(HFILES) Makefile rozdeleni
+	zip -j $(NAME).zip $^ ../doc/dokumentace.pdf

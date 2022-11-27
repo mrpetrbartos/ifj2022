@@ -1,5 +1,7 @@
-<program>   -> <body_main> EOF
-<program>   -> <body_main> closing_tag EOF
+<program>   -> <body_main> <program_e>
+
+<program_e> -> ε
+<program_e> -> ?>
 
 <type_p>	-> float
 <type_p>	-> int
@@ -8,33 +10,37 @@
 <type>      -> <type_p>
 <type>      -> ?<type_p>
 
-<return>    -> return <expr>
-<return>    -> return ε
+<return>    -> return <return_p>
 
-<body_main> -> <body> <body_main>
-<body_main> -> <func_def> <body_main>
-<body_main> -> ε
+<return_p>  -> expr
+<return_p>  -> ε
+
+<body_main> -> <body>
+<body_main> -> <func_def> <body>
+
 
 <body>      -> ε
-<body>      -> <if> <body>
-<body>      -> <while> <body>
-<body>      -> <expr> <body>
-<body>      -> identifier_var = <expr> <body>
-<body>      -> indentifier_var = <func> <body>
-<body>      -> <func> <body>
-<body>      -> <return> <body>
+<body>      -> <if> ; <body>
+<body>      -> <while> ; <body>
+<body>      -> expr ; <body>
+<body>      -> identifier_var = expr ; <body>
+<body>      -> indentifier_var = <func> ; <body>
+<body>      -> <func> ; <body>
+<body>      -> <return> ; <body>
 
-<if>        -> if <expr> { <body> } else { <body> }
-<while>     -> while <expr> { <body> }
+<if>        -> if expr { <body> } else { <body> }
+<while>     -> while expr { <body> }
 
 <params>    -> ε
 <params>    -> <type> identifier_var <params_n>
 <params>    -> identifier_var <params_n>
-<params>    -> <expr> <params_n>
+<params>    -> expr <params_n>
 <params_n>  -> ε
-<params_n>  -> , <type> identifier_var <params_n>
-<params_n>  -> , identifier_var <params_n>
-<params_n>  -> , <expr> <params_n>
+<params_n>  -> , <params_p> <params_n>
+
+<params_p> -> <type> identifier_var
+<params_p> -> identifier_var
+<params_p> -> expr
 
 <func_def>  -> function identifier_func ( <params> ) : <type> { <body> }
 <func>      -> identifier_func ( <params> )
