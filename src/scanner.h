@@ -32,12 +32,14 @@ typedef enum
     STATE_FLOAT_1,
     STATE_FLOAT_E_0,
     STATE_FLOAT_E_1,
+    STATE_FLOAT_E_2,
     STATE_STRING,
     STATE_STRING_ESCAPE,
     STATE_STRING_HEXA_0,
     STATE_STRING_HEXA_1,
     STATE_STRING_OCTA_0,
-    STATE_STRING_OCTA_1
+    STATE_STRING_OCTA_1,
+    STATE_CLOSING_TAG
 } State;
 typedef enum
 {
@@ -90,7 +92,8 @@ typedef enum
     TOKEN_LEFT_BRACE,
     TOKEN_RIGHT_BRACE,
     TOKEN_COMMA,
-    TOKEN_SEMICOLON,
+    TOKEN_COLON,
+    TOKEN_SEMICOLON
 } TokenType;
 
 typedef union

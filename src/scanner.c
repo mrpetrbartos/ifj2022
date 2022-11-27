@@ -85,6 +85,8 @@ int initialScan()
     while (!isspace(c = getc(sourceFile)))
     {
         vStrAppend(&string, c);
+        if (c == EOF)
+            break;
     }
     if (strcmp((&string)->content, "<?php") || !isspace(c))
     {
@@ -95,24 +97,6 @@ int initialScan()
 
     vStrFree(&string);
 
-    if (!vStrInit(&string))
-    {
-        printError(0, 0, "Couldn't initialize string");
-        return ERR_INTERNAL;
-    }
-
-    while ((c = getc(sourceFile)) != ';')
-    {
-        vStrAppend(&string, c);
-    }
-    if (strcmp((&string)->content, "declare(strict_types=1)") || (c != ';'))
-    {
-        vStrFree(&string);
-        printError(0, 0, "The program has to start with a prologue, missing declare");
-        return ERR_LEXICAL_AN;
-    }
-
-    vStrFree(&string);
     return 0;
 }
 
@@ -180,6 +164,10 @@ int getToken(Token *token)
                 break;
             case ',':
                 token->type = TOKEN_COMMA;
+                tokenComplete = true;
+                break;
+            case ':':
+                token->type = TOKEN_COLON;
                 tokenComplete = true;
                 break;
             case ';':
@@ -265,13 +253,27 @@ int getToken(Token *token)
             break;
         case STATE_OPTIONAL:
             if (c == '>')
-                token->type = TOKEN_CLOSING_TAG;
+                state = STATE_CLOSING_TAG;
             else
             {
                 token->type = TOKEN_OPTIONAL_TYPE;
                 ungetc(c, sourceFile);
+                tokenComplete = true;
             }
-            tokenComplete = true;
+            break;
+        case STATE_CLOSING_TAG:
+            if (c == EOF)
+            {
+                token->type = TOKEN_CLOSING_TAG;
+                tokenComplete = true;
+                ungetc(c, sourceFile);
+            }
+            else
+            {
+                vStrFree(&string);
+                printError(0, 0, "Expected EOF after closing tag");
+                return ERR_LEXICAL_AN;
+            }
             break;
         case STATE_NOT_EQUAL_0:
             if (c == '=')
@@ -450,6 +452,19 @@ int getToken(Token *token)
             if (isdigit(c))
             {
                 vStrAppend(&string, c);
+                state = STATE_FLOAT_E_2;
+            }
+            else
+            {
+                vStrFree(&string);
+                printError(token->pos.line, token->pos.character, "Unknown token found, exponent must be followed by a (signed) digit");
+                return ERR_LEXICAL_AN;
+            }
+            break;
+        case STATE_FLOAT_E_2:
+            if (isdigit(c))
+            {
+                vStrAppend(&string, c);
             }
             else
             {
@@ -468,7 +483,7 @@ int getToken(Token *token)
             }
             break;
         case STATE_STRING:
-            if (c < 32)
+            if (c < 32 || c == '$')
             {
                 vStrFree(&string);
                 printError(token->pos.line, token->pos.character, "String contains unsupported character(s)");
@@ -619,7 +634,7 @@ int getToken(Token *token)
             }
             break;
         case STATE_LINE_COM:
-            if (c == '\n')
+            if (c == '\n' || c == EOF)
             {
                 lineNum++;
                 charNum = 0;
