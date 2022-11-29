@@ -22,6 +22,43 @@ typedef struct
     Symtable *symtable;
 } Parser;
 
+#define LINENUM parser.currToken.pos.line
+#define CHARNUM parser.currToken.pos.character
+#define GETTOKEN(t)       \
+    if (getToken(t) != 0) \
+        return ERR_LEXICAL_AN;
+#define CHECKSEMICOLON()                                                      \
+    if (parser.currToken.type != TOKEN_SEMICOLON)                             \
+    {                                                                         \
+        printError(LINENUM, CHARNUM, "Missing semicolon after a statement."); \
+        return ERR_SYNTAX_AN;                                                 \
+    }
+#define CHECKRULE(r)    \
+    do                  \
+    {                   \
+        err = (r);      \
+        if (err != 0)   \
+            return err; \
+    } while (0);
+#define BEGINNINGOFEX()                \
+    do                                 \
+    {                                  \
+        switch (parser.currToken.type) \
+        {                              \
+        case TOKEN_LEFT_BRACKET:       \
+        case TOKEN_STRING:             \
+        case TOKEN_INT:                \
+        case TOKEN_FLOAT:              \
+        case TOKEN_NULL:               \
+        case TOKEN_IDENTIFIER_VAR:     \
+            expr = true;               \
+            break;                     \
+        default:                       \
+            expr = false;              \
+            break;                     \
+        }                              \
+    } while (0);
+
 /**
  * @brief Initializes all structures, that need to by malloced.
  *

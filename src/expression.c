@@ -304,7 +304,6 @@ int parseExpression()
 {
     Token bottom = {.type = DOLLAR};
     stackPush(parser.stack, bottom);
-    getToken(&(parser.currToken));
 
     while (true)
     {
