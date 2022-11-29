@@ -39,7 +39,8 @@ typedef enum
     STATE_STRING_HEXA_1,
     STATE_STRING_OCTA_0,
     STATE_STRING_OCTA_1,
-    STATE_CLOSING_TAG
+    STATE_CLOSING_TAG_0,
+    STATE_CLOSING_TAG_1
 } State;
 typedef enum
 {

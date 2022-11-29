@@ -253,7 +253,7 @@ int getToken(Token *token)
             break;
         case STATE_OPTIONAL:
             if (c == '>')
-                state = STATE_CLOSING_TAG;
+                state = STATE_CLOSING_TAG_0;
             else
             {
                 token->type = TOKEN_OPTIONAL_TYPE;
@@ -261,7 +261,23 @@ int getToken(Token *token)
                 tokenComplete = true;
             }
             break;
-        case STATE_CLOSING_TAG:
+        case STATE_CLOSING_TAG_0:
+            if (c == EOF)
+            {
+                token->type = TOKEN_CLOSING_TAG;
+                tokenComplete = true;
+                ungetc(c, sourceFile);
+            }
+            else if (c == '\n')
+                state = STATE_CLOSING_TAG_1;
+            else
+            {
+                vStrFree(&string);
+                printError(0, 0, "Expected EOF after closing tag");
+                return ERR_LEXICAL_AN;
+            }
+            break;
+        case STATE_CLOSING_TAG_1:
             if (c == EOF)
             {
                 token->type = TOKEN_CLOSING_TAG;
