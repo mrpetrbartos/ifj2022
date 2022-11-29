@@ -46,7 +46,7 @@ int reduceI()
         {
             vStrFree(&(head.value.string));
             printError(head.pos.line, head.pos.character, "Undefined variable used in an expression.");
-            return ERR_UNDEF_REDEF_FUNC;
+            return ERR_UNDEF_VAR;
         }
     }
 
