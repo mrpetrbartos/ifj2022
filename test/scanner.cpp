@@ -59,7 +59,7 @@ void ScannerTest::TestSc(std::string &input, std::list<ScannedToken> &tokens, in
     int res;
     while (1)
     {
-        res = getToken(&scannedToken);
+        res = getToken(&scannedToken, false);
         if (scannedToken.type == TOKEN_EOF)
             break;
 

@@ -24,8 +24,8 @@ typedef struct
 
 #define LINENUM parser.currToken.pos.line
 #define CHARNUM parser.currToken.pos.character
-#define GETTOKEN(t)       \
-    if (getToken(t) != 0) \
+#define GETTOKEN(t)              \
+    if (getToken(t, false) != 0) \
         return ERR_LEXICAL_AN;
 #define CHECKSEMICOLON()                                                      \
     if (parser.currToken.type != TOKEN_SEMICOLON)                             \

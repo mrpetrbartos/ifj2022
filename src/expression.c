@@ -295,7 +295,7 @@ int shift()
     free(putaway);
 
     stackPush(parser.stack, parser.currToken);
-    getToken(&(parser.currToken));
+    getToken(&(parser.currToken), false);
 
     return 0;
 }
@@ -321,7 +321,7 @@ int parseExpression()
 
         case (E):
             stackPush(parser.stack, parser.currToken);
-            getToken(&(parser.currToken));
+            getToken(&(parser.currToken), false);
             break;
 
         case (O):
