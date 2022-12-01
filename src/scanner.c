@@ -100,13 +100,23 @@ int initialScan()
     return 0;
 }
 
-int getToken(Token *token)
+int getToken(Token *token, bool peek)
 {
     vStr string;
     if (!vStrInit(&string))
     {
         printError(0, 0, "Couldn't initialize string");
         return ERR_INTERNAL;
+    }
+
+    static Token peekedToken = {.type = TOKEN_EMPTY};
+
+    if (peekedToken.type != TOKEN_EMPTY)
+    {
+        *token = peekedToken;
+        if (!peek)
+            peekedToken.type = TOKEN_EMPTY;
+        return 0;
     }
 
     static int lineNum = 1;
@@ -690,6 +700,9 @@ int getToken(Token *token)
         token->value.string = string;
     else
         vStrFree(&string);
+
+    if (peek)
+        peekedToken = *token;
 
     return 0;
 }

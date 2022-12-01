@@ -123,9 +123,10 @@ typedef struct
  * @brief Reads next token from the source file.
  *
  * @param token Pointer to the token variable.
+ * @param peek Only peek at the next token.
  * @return int 0 if token was read successfully, non-zero value representing error.
  */
-int getToken(Token *token);
+int getToken(Token *token, bool peek);
 
 /**
  * @brief Set the file with source code to be scanned.

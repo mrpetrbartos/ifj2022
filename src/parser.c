@@ -43,7 +43,7 @@ int checkPrologue()
     Token t;
     for (int i = 0; i < 7; i++)
     {
-        getToken(&t);
+        getToken(&t, false);
         if (t.type != prologue[i].type)
         {
             return 1;
