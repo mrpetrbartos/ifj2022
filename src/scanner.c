@@ -253,7 +253,7 @@ int getToken(Token *token)
             break;
         case STATE_OPTIONAL:
             if (c == '>')
-                state = STATE_CLOSING_TAG;
+                state = STATE_CLOSING_TAG_0;
             else
             {
                 token->type = TOKEN_OPTIONAL_TYPE;
@@ -261,7 +261,23 @@ int getToken(Token *token)
                 tokenComplete = true;
             }
             break;
-        case STATE_CLOSING_TAG:
+        case STATE_CLOSING_TAG_0:
+            if (c == EOF)
+            {
+                token->type = TOKEN_CLOSING_TAG;
+                tokenComplete = true;
+                ungetc(c, sourceFile);
+            }
+            else if (c == '\n')
+                state = STATE_CLOSING_TAG_1;
+            else
+            {
+                vStrFree(&string);
+                printError(0, 0, "Expected EOF after closing tag");
+                return ERR_LEXICAL_AN;
+            }
+            break;
+        case STATE_CLOSING_TAG_1:
             if (c == EOF)
             {
                 token->type = TOKEN_CLOSING_TAG;
@@ -341,7 +357,7 @@ int getToken(Token *token)
                 vStrAppend(&string, c);
             else
             {
-                token->type = TOKEN_IDENTIFIER;
+                token->type = TOKEN_IDENTIFIER_VAR;
                 tokenComplete = true;
                 ungetc(c, sourceFile);
             }
@@ -355,7 +371,7 @@ int getToken(Token *token)
                 checkKeyword(token, &string);
                 if (token->type != TOKEN_KEYWORD)
                 {
-                    token->type = TOKEN_IDENTIFIER;
+                    token->type = TOKEN_IDENTIFIER_FUNC;
                 }
                 tokenComplete = true;
             }
@@ -670,7 +686,7 @@ int getToken(Token *token)
         }
     }
 
-    if (token->type == TOKEN_STRING || token->type == TOKEN_IDENTIFIER)
+    if (token->type == TOKEN_STRING || token->type == TOKEN_IDENTIFIER_VAR || token->type == TOKEN_IDENTIFIER_FUNC)
         token->value.string = string;
     else
         vStrFree(&string);

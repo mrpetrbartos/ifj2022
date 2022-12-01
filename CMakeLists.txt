@@ -34,7 +34,12 @@ add_executable(testScanner
         src/scanner.c src/scanner.h 
         src/error.c src/error.h
         src/vstr.c src/vstr.h
-        test/scanner.cpp)
+        src/expression.c src/expression.h
+        src/parser.c src/parser.h
+        src/symtable.c src/symtable.h
+        src/stack.c src/stack.h
+        test/scanner.cpp
+        test/parser.cpp)
 target_link_libraries(testScanner gtest gtest_main)
 
 add_test(scanner testScanner)
