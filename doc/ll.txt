@@ -23,13 +23,15 @@
 <body>      -> <if> ; <body>
 <body>      -> <while> ; <body>
 <body>      -> expr ; <body>
-<body>      -> identifier_var = expr ; <body>
-<body>      -> indentifier_var = <func> ; <body>
+<body>      -> identifier_var = <assign_v> ; <body>
 <body>      -> <func> ; <body>
 <body>      -> <return> ; <body>
 
-<if>        -> if expr { <body> } else { <body> }
-<while>     -> while expr { <body> }
+<assign_v>  -> expr
+<assign_v>  -> <func>
+
+<if>        -> if ( expr ) { <body> } else { <body> }
+<while>     -> while ( expr ) { <body> }
 
 <params>    -> ε
 <params>    -> <type> identifier_var <params_n>
@@ -38,9 +40,9 @@
 <params_n>  -> ε
 <params_n>  -> , <params_p> <params_n>
 
-<params_p> -> <type> identifier_var
-<params_p> -> identifier_var
-<params_p> -> expr
+<params_p>  -> <type> identifier_var
+<params_p>  -> identifier_var
+<params_p>  -> expr
 
 <func_def>  -> function identifier_func ( <params> ) : <type> { <body> }
 <func>      -> identifier_func ( <params> )

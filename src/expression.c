@@ -42,7 +42,7 @@ int reduceI()
     Token head = parser.stack->head->t;
     if (head.type == TOKEN_IDENTIFIER_VAR)
     {
-        if (symtableFind(parser.symtable, head.value.string.content) == NULL)
+        if (symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, head.value.string.content) == NULL)
         {
             vStrFree(&(head.value.string));
             printError(head.pos.line, head.pos.character, "Undefined variable used in an expression.");
@@ -53,6 +53,12 @@ int reduceI()
     Token t;
     stackPop(parser.stack, &t);
     // TODO: push instr
+    StackItem *tmp = parser.stack->head;
+    while (tmp != NULL)
+    {
+        printf("%i\n", tmp->t.type);
+        tmp = tmp->next;
+    }
     printf("PUSHS %i\n", t.value.integer);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -210,7 +216,6 @@ tableIndex getTableIndex(Token t)
     case TOKEN_STRING:
     case TOKEN_INT:
     case TOKEN_FLOAT:
-    case TOKEN_NULL:
     case TOKEN_IDENTIFIER_VAR:
         return I_DATA;
     case TOKEN_GREATER_EQUAL:
@@ -225,6 +230,11 @@ tableIndex getTableIndex(Token t)
         return I_OPENB;
     case TOKEN_RIGHT_BRACKET:
         return I_CLOSEB;
+    case TOKEN_KEYWORD:
+        if (t.value.keyword == KW_NULL)
+            return I_DATA;
+        else
+            return I_DOLLAR;
     default:
         return I_DOLLAR;
     }

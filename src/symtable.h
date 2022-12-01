@@ -24,6 +24,7 @@ typedef struct SymtableData
 {
     ElType type;
     int paramsCnt;
+    bool possiblyUndefined;
 } SymtableData;
 
 typedef struct SymtablePair
@@ -77,9 +78,10 @@ SymtablePair *symtableFind(Symtable *t, SymtableKey key);
  * @param key Key of the element.
  * @param type Type of the element.
  * @param paramsCnt Number of parameters (only for functions).
+ * @param undefined Indentifier was defined in an if statement, thus possibly not defined.
  * @return SymtablePair* Pointer to the added element.
  */
-SymtablePair *symtableAdd(Symtable *t, SymtableKey key, ElType type, int paramsCnt);
+SymtablePair *symtableAdd(Symtable *t, SymtableKey key, ElType type, int paramsCnt, bool undefined);
 
 /**
  * @brief Frees a symtable.

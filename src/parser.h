@@ -18,8 +18,10 @@ typedef struct
 {
     Token currToken;
     bool outsideBody;
+    bool inIf;
     Stack *stack;
     Symtable *symtable;
+    Symtable *localSymtable;
 } Parser;
 
 #define LINENUM parser.currToken.pos.line

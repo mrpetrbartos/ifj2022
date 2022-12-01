@@ -17,9 +17,14 @@ int parserInit()
     Symtable *st = symtableInit(1024);
     if (st == NULL)
         return ERR_INTERNAL;
+    Symtable *stLoc = symtableInit(1024);
+    if (stLoc == NULL)
+        return ERR_INTERNAL;
     parser.stack = s;
     parser.outsideBody = false;
     parser.symtable = st;
+    parser.localSymtable = stLoc;
+    parser.inIf = false;
     return 0;
 }
 
@@ -140,8 +145,12 @@ int parseIf()
         return ERR_SYNTAX_AN;
     }
 
+    parser.inIf = true;
+
     GETTOKEN(&parser.currToken)
     CHECKRULE(parseNeBody())
+
+    parser.inIf = false;
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACE)
     {
@@ -183,7 +192,7 @@ int parseReturn()
     // TODO: if the fuction/main body doesn't return value,
     // return can't be followed by an expression
     // <return_p>  -> expr.
-    if (!parser.outsideBody || (parser.outsideBody && false))
+    if (!parser.outsideBody || (parser.outsideBody && true))
     {
         CHECKRULE(parseExpression())
     }
@@ -201,95 +210,6 @@ int parseReturn()
     return err;
 }
 
-int parseBody()
-{
-    int err = 0;
-
-    if (parser.currToken.type == TOKEN_KEYWORD)
-        switch (parser.currToken.value.keyword)
-        {
-        // <body> -> <if> <body>
-        case KW_IF:
-            CHECKRULE(parseIf())
-            break;
-
-        // <body> -> <while> ; <body>
-        case KW_WHILE:
-            CHECKRULE(parseWhile())
-            break;
-
-        // <body> -> <return> ; <body>
-        case KW_RETURN:
-            CHECKRULE(parseReturn())
-            CHECKSEMICOLON()
-            break;
-
-        default:
-            printError(LINENUM, CHARNUM, "Unexpected keyword found.");
-            return ERR_SYNTAX_AN;
-            break;
-        }
-
-    return err;
-}
-
-int parseTypeP()
-{
-    if (parser.currToken.type != TOKEN_KEYWORD)
-    {
-        printError(LINENUM, CHARNUM, "Expected variable type:).");
-        return ERR_SYNTAX_AN;
-    }
-
-    // <type_p> -> float.
-    // <type_p> -> int.
-    // <type_p> -> string.
-    switch (parser.currToken.value.keyword)
-    {
-    case KW_STRING:
-    case KW_INT:
-    case KW_FLOAT:
-        return 0;
-
-    default:
-        printError(LINENUM, CHARNUM, "Expected variable type.");
-        return ERR_SYNTAX_AN;
-    }
-}
-
-int parseParamsDefN()
-{
-    int err = 0;
-    CHECKRULE(parseTypeP())
-    GETTOKEN(&parser.currToken)
-    if (parser.currToken.type != TOKEN_IDENTIFIER_VAR)
-    {
-        printError(LINENUM, CHARNUM, "Type has to be followed by a variable.");
-        return ERR_SYNTAX_AN;
-    }
-
-    GETTOKEN(&parser.currToken)
-    // <params_dn>  -> , <params_dp> <params_n>.
-    if (parser.currToken.type == TOKEN_COMMA)
-    {
-        GETTOKEN(&parser.currToken)
-        return parseParamsDefN();
-    }
-    // <params_dn>  -> .
-    else
-        return err;
-}
-
-int parseParamsDef()
-{
-    // <params_dp>  -> .
-    if (parser.currToken.type == TOKEN_RIGHT_BRACKET)
-        return 0;
-    // <params_dp>  -> <type_p> identifier_var <params_dn>.
-    else
-        return parseParamsDefN();
-}
-
 int parseParamsCallN()
 {
     int err = 0;
@@ -301,7 +221,7 @@ int parseParamsCallN()
         break;
 
     case TOKEN_IDENTIFIER_VAR:
-        if (symtableFind(parser.symtable, parser.currToken.value.string.content) == NULL)
+        if (symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, parser.currToken.value.string.content) == NULL)
         {
             vStrFree(&(parser.currToken.value.string));
             printError(LINENUM, CHARNUM, "Redefinition of function.");
@@ -338,6 +258,168 @@ int parseParamsCall()
         return parseParamsCallN();
 }
 
+int parseFunctionCall()
+{
+    int err = 0;
+
+    GETTOKEN(&parser.currToken)
+    if (parser.currToken.type != TOKEN_LEFT_BRACKET)
+    {
+        printError(LINENUM, CHARNUM, "Function's parameters have to be in a bracket (opening).");
+        return ERR_SYNTAX_AN;
+    }
+
+    GETTOKEN(&parser.currToken)
+    CHECKRULE(parseParamsCall())
+
+    if (parser.currToken.type != TOKEN_RIGHT_BRACKET)
+    {
+        printError(LINENUM, CHARNUM, "Function's parameters have to be in a bracket (closing).");
+        return ERR_SYNTAX_AN;
+    }
+
+    GETTOKEN(&parser.currToken)
+
+    return err;
+}
+
+int parseAssign()
+{
+    GETTOKEN(&parser.currToken)
+    // <assign_v> -> <func>
+    if (parser.currToken.type == TOKEN_IDENTIFIER_FUNC)
+        return parseFunctionCall();
+    // <assign_v> -> expr
+    else
+        return parseExpression();
+}
+
+int parseBody()
+{
+    int err = 0;
+
+    if (parser.currToken.type == TOKEN_KEYWORD)
+        switch (parser.currToken.value.keyword)
+        {
+        // <body> -> <if> <body>
+        case KW_IF:
+            CHECKRULE(parseIf())
+            break;
+
+        // <body> -> <while> ; <body>
+        case KW_WHILE:
+            CHECKRULE(parseWhile())
+            break;
+
+        // <body> -> <return> ; <body>
+        case KW_RETURN:
+            CHECKRULE(parseReturn())
+            CHECKSEMICOLON()
+            break;
+
+        case KW_NULL:
+            CHECKRULE(parseExpression())
+            CHECKSEMICOLON()
+            break;
+
+        default:
+            printError(LINENUM, CHARNUM, "Unexpected keyword found.");
+            return ERR_SYNTAX_AN;
+            break;
+        }
+
+    if (parser.currToken.type == TOKEN_IDENTIFIER_VAR)
+    {
+        Token nextToken;
+        if (getToken(&nextToken, true) != 0)
+            return ERR_LEXICAL_AN;
+
+        // <body> -> identifier_var = <assign_v> ; <body>.
+        if (nextToken.type == TOKEN_ASSIGN)
+        {
+            Token variable = parser.currToken;
+            GETTOKEN(&parser.currToken)
+            CHECKRULE(parseAssign())
+            symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.inIf);
+        }
+        // <body> -> expr ; <body>.
+        else
+        {
+            CHECKRULE(parseExpression())
+        }
+        CHECKSEMICOLON()
+    }
+
+    if (parser.currToken.type == TOKEN_IDENTIFIER_FUNC)
+    {
+        CHECKRULE(parseFunctionCall())
+        CHECKSEMICOLON()
+    }
+
+    return err;
+}
+
+int parseTypeP()
+{
+    if (parser.currToken.type != TOKEN_KEYWORD)
+    {
+        printError(LINENUM, CHARNUM, "Expected variable type:).");
+        return ERR_SYNTAX_AN;
+    }
+
+    // <type_p> -> float.
+    // <type_p> -> int.
+    // <type_p> -> string.
+    switch (parser.currToken.value.keyword)
+    {
+    case KW_STRING:
+    case KW_INT:
+    case KW_FLOAT:
+        return 0;
+
+    default:
+        printError(LINENUM, CHARNUM, "Expected variable type.");
+        return ERR_SYNTAX_AN;
+    }
+}
+
+int parseParamsDefN(int *paramsCnt)
+{
+    int err = 0;
+    CHECKRULE(parseTypeP())
+    GETTOKEN(&parser.currToken)
+    if (parser.currToken.type != TOKEN_IDENTIFIER_VAR)
+    {
+        printError(LINENUM, CHARNUM, "Type has to be followed by a variable.");
+        return ERR_SYNTAX_AN;
+    }
+
+    symtableAdd(parser.localSymtable, parser.currToken.value.string.content, VAR, -1, parser.inIf);
+
+    ++(*paramsCnt);
+
+    GETTOKEN(&parser.currToken)
+    // <params_dn>  -> , <params_dp> <params_n>.
+    if (parser.currToken.type == TOKEN_COMMA)
+    {
+        GETTOKEN(&parser.currToken)
+        return parseParamsDefN(paramsCnt);
+    }
+    // <params_dn>  -> .
+    else
+        return err;
+}
+
+int parseParamsDef(int *paramsCnt)
+{
+    // <params_dp>  -> .
+    if (parser.currToken.type == TOKEN_RIGHT_BRACKET)
+        return 0;
+    // <params_dp>  -> <type_p> identifier_var <params_dn>.
+    else
+        return parseParamsDefN(paramsCnt);
+}
+
 int parseType()
 {
     if (parser.currToken.type == TOKEN_OPTIONAL_TYPE)
@@ -357,6 +439,7 @@ int parseType()
 int parseFunctionDef()
 {
     int err = 0;
+    parser.outsideBody = true;
 
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_IDENTIFIER_FUNC)
@@ -372,6 +455,8 @@ int parseFunctionDef()
         return ERR_UNDEF_REDEF_FUNC;
     }
 
+    Token func = parser.currToken;
+
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_LEFT_BRACKET)
     {
@@ -379,8 +464,10 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
+    // TODO: linked list of parameters?
+    int paramsCnt = 0;
     GETTOKEN(&parser.currToken)
-    CHECKRULE(parseParamsDef())
+    CHECKRULE(parseParamsDef(&paramsCnt))
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACKET)
     {
@@ -414,6 +501,9 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
+    symtableAdd(parser.symtable, func.value.string.content, FUNC, paramsCnt, parser.inIf);
+
+    parser.outsideBody = false;
     return err;
 }
 
@@ -475,17 +565,17 @@ int parse()
     }
 
     // Insert builtin functions
-    symtableAdd(parser.symtable, "reads", FUNC, 0);
-    symtableAdd(parser.symtable, "readi", FUNC, 0);
-    symtableAdd(parser.symtable, "readf", FUNC, 0);
-    symtableAdd(parser.symtable, "write", FUNC, -1);
-    symtableAdd(parser.symtable, "floatval", FUNC, 1);
-    symtableAdd(parser.symtable, "intval", FUNC, 1);
-    symtableAdd(parser.symtable, "strval", FUNC, 1);
-    symtableAdd(parser.symtable, "strlen", FUNC, 1);
-    symtableAdd(parser.symtable, "substr", FUNC, 3);
-    symtableAdd(parser.symtable, "ord", FUNC, 1);
-    symtableAdd(parser.symtable, "chr", FUNC, 1);
+    symtableAdd(parser.symtable, "reads", FUNC, 0, false);
+    symtableAdd(parser.symtable, "readi", FUNC, 0, false);
+    symtableAdd(parser.symtable, "readf", FUNC, 0, false);
+    symtableAdd(parser.symtable, "write", FUNC, -1, false);
+    symtableAdd(parser.symtable, "floatval", FUNC, 1, false);
+    symtableAdd(parser.symtable, "intval", FUNC, 1, false);
+    symtableAdd(parser.symtable, "strval", FUNC, 1, false);
+    symtableAdd(parser.symtable, "strlen", FUNC, 1, false);
+    symtableAdd(parser.symtable, "substr", FUNC, 3, false);
+    symtableAdd(parser.symtable, "ord", FUNC, 1, false);
+    symtableAdd(parser.symtable, "chr", FUNC, 1, false);
 
     GETTOKEN(&parser.currToken)
     return parseProgram();

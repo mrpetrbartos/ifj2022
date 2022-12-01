@@ -17,3 +17,6 @@ jobs:
       run: cd cmake-build && make all
     - name: Run Test
       run: cd cmake-build && ctest --verbose
+    - name: Show Coverage
+      run: printf "=== Scanner tests ===\n\n" && gcov cmake-build/CMakeFiles/testScanner.dir/src/*.gcov && \
+            printf "\n\n=== Parser tests ===\n\n" && gcov cmake-build/CMakeFiles/testParser.dir/src/*.gcov
