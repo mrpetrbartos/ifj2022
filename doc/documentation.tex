@@ -1,0 +1,153 @@
+\documentclass[a4paper,12pt]{article}
+\usepackage[utf8]{inputenc}
+\usepackage[IL2]{fontenc}
+\usepackage[left=1.5cm,top=2.5cm,text={18cm,25cm}]{geometry}
+\usepackage[czech]{babel}
+\usepackage{times}
+\usepackage{enumitem}
+\usepackage{array,etoolbox}
+\preto\tabular{\setcounter{rule_table_number}{0}}
+\newcounter{rule_table_number}
+\newcommand\rownumber{\stepcounter{rule_table_number}\arabic{rule_table_number}}
+
+\begin{document}
+\begin{titlepage}
+	\begin{center}
+		\textsc{{\Huge Vysoké učení technické v~Brně\\[0.4em]}}
+		\textsc{{\huge Fakulta informačních technologií}}
+		\vspace{\stretch{0.382}}
+				    
+		{\Large Dokumentace projektu z předmětů IFJ a IAL\\[0.3em]}
+		\textbf{{\LARGE Implementace překladače imperativního jazyka IFJ22\\[0.4em]}}
+		{\Large Tým xbarto0g, varianta\,--\,TRP}
+		\vspace{\stretch{0.618}}
+				    
+				    
+	\end{center}
+	{\large 2. prosince 2022 \hfill
+		\begin{tabular}{c |c}
+			Petr Bartoš \,--\, xbarto0g (vedoucí)\; & \; 40\,\% \\
+			Tomáš Rajsigl \,--\, xrajsi01\;         & \; 30\,\% \\
+			Lukáš Zedek \,--\, xzedek03\;           & \; 30\,\% \\
+			Dmytro Afanasiev \,--\, xafana01\;        & \; 0\,\%  \\
+		\end{tabular}
+	}
+\end{titlepage}
+
+\section{Úvod}
+Cílem projektu je vytvořit program v jazyce C, který načte zdrojový kód zapsaný ve zdrojovém jazyce IFJ22
+a přeloží jej do cílového jazyka IFJcode22. Jazyk IFJ22 je zjednodušenou podmnožinou jazyka PHP. Konkrétně se jedná o variantu zadání s implementací tabulky symbolů pomocí tabulky s rozptýlenými položkami.
+
+\section{Práce v týmu}
+Práci jsme si rozdělili jakožto čtyřčlenný tým, avšak z důvodu nespolupracování a nezájmu jednoho člena jsme byli nuceni si práci přerozdělit a projekt vypracovat pouze ve třech. Vzhledem k časové náročnosti a složitosti daných částí jsme se rozhodli pro nerovnoměrné rozdělení bodů.
+
+\subsection{Rozdělení práce}
+
+\begin{itemize}
+	\item Petr Bartoš
+	      \begin{itemize}
+	      	\item Syntaktická a sémantická analýza, kostra pro testovaní, tabulka symbolů, Makefile
+	      \end{itemize}
+	\item Tomáš Rajsigl 
+	      \begin{itemize}
+	      	\item Lexikální analýza, dokumentace
+	      \end{itemize}
+	\item Lukáš Zedek
+	      \begin{itemize}
+	      	\item Generování cílového kódu, testování, dokumentace
+	      \end{itemize}
+\end{itemize}
+Kontrole kódu, jeho čitelnosti a opravě chyb jsme se věnovali všichni.
+\subsection{Vývojový cyklus}
+Při vypracovávání projektu jsme využívali verzovací systém Git. Pro dané části projektu byly vytvořeny konkrétní branche, kde jsme je testovali a upravovali. Před zahrnutím do master branche byl vyžadován pull request, následný code review a schválení od jednoho či více členů. Součástí vývojového cyklu byl i unit testing. Při každém commitu byly automaticky spuštěny testy a bylo tak hned možné vidět, jaký dopad bude commit mít na výsledný program.
+
+\section{Návrh a implementace překladače}
+Projekt byl rozdělen na několik konrétních částí, které jsou představeny v této kapitole.
+\clearpage
+
+\subsection{Lexikální analýza}
+
+\subsubsection{Dynamický řetězec}
+
+\subsection{Syntaktická analýza}
+
+\subsubsection{Precedenční syntaktická analýza}
+
+\clearpage
+
+\subsection{Sémantická analýza}
+
+\subsection{Generování cílového kódu}
+
+\clearpage
+
+\subsection{Přílohy}
+
+\subsubsection{Diagram konečného automatu}
+    
+\clearpage
+
+\subsubsection{LL\,--\,gramatika}
+\begin{table}[!ht]
+	\centering
+	\begin{enumerate}[noitemsep]
+		\item \verb|<program>   -> <body_main> <program_e>|
+		      		         
+		\item \verb|<program_e> -> |$\varepsilon$
+		\item \verb|<program_e> -> ?>|
+		      		         
+		\item \verb|<type_p>    -> float|
+		\item \verb|<type_p>    -> int|
+		\item \verb|<type_p>    -> string|
+		\item \verb|<type>      -> null|
+		\item \verb|<type>      -> <type_p>|
+		\item \verb|<type>      -> ?<type_p>|
+		      		      
+		\item \verb|<return>    -> return <return_p>|
+		\item \verb|<return_p>  -> expr|
+		\item \verb|<return_p>  -> |$\varepsilon$
+		      		         
+		\item \verb|<body_main> -> <body>|
+		\item \verb|<body_main> -> <func_def> <body>|
+		      		         
+		\item \verb|<body>      -> |$\varepsilon$
+		\item \verb|<body>      -> <if> ; <body>|
+		\item \verb|<body>      -> <while> ; <body>|
+		\item \verb|<body>      -> expr ; <body>|
+		\item \verb|<body>      -> identifier_var = expr ; <body>|
+		\item \verb|<body>      -> indentifier_var = <func> ; <body>|
+		\item \verb|<body>      -> <func> ; <body>|
+		\item \verb|<body>      -> <return> ; <body>|
+		      		         
+		\item \verb|<if>        -> if expr { <body> } else { <body> }|
+		\item \verb|<while>     -> while expr { <body> }|
+		      		         
+		\item \verb|<params>    -> |$\varepsilon$
+		\item \verb|<params>    -> <type> identifier_var <params_n>|
+		\item \verb|<params>    -> identifier_var <params_n>|
+		\item \verb|<params>    -> expr <params_n>|
+		\item \verb|<params_n>  -> |$\varepsilon$
+		\item \verb|<params_n>  -> , <params_p> <params_n>|
+		      		      
+		\item \verb|<params_p>  -> <type> identifier_var|
+		\item \verb|<params_p>  -> identifier_var|
+		\item \verb|<params_p>  -> expr|
+		      		         
+		\item \verb|<func_def>  -> function identifier_func ( <params> ) : <type> { <body> }|
+		\item \verb|<func>      -> identifier_func ( <params> )|
+		      		         
+	\end{enumerate}
+	\caption{LL\,--\,gramatika řídící syntaktickou analýzu}
+	\label{table:ll-gramatika}
+\end{table}
+\clearpage
+  
+\subsubsection{LL\,--\,tabulka}
+
+\subsubsection{Precedenční tabulka}
+
+\section{Reference}
+
+
+
+\end{document}
