@@ -53,12 +53,6 @@ int reduceI()
     Token t;
     stackPop(parser.stack, &t);
     // TODO: push instr
-    StackItem *tmp = parser.stack->head;
-    while (tmp != NULL)
-    {
-        printf("%i\n", tmp->t.type);
-        tmp = tmp->next;
-    }
     printf("PUSHS %i\n", t.value.integer);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)

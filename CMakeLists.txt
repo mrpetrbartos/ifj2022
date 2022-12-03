@@ -46,7 +46,7 @@ add_executable(testParser
         src/expression.c src/expression.h
         src/parser.c src/parser.h
         src/symtable.c src/symtable.h
-        src/stack.c src/stack.h
+        src/structures.c src/structures.h
         test/scanner.cpp
         test/parser.cpp)
 target_link_libraries(testParser PRIVATE gcov gtest gtest_main)

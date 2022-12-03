@@ -59,7 +59,7 @@ SymtablePair *symtableFind(Symtable *t, SymtableKey key)
     return NULL;
 }
 
-SymtablePair *symtableAdd(Symtable *t, SymtableKey key, ElType type, int paramsCnt, bool undefined)
+SymtablePair *symtableAdd(Symtable *t, SymtableKey key, ElType type, int paramsCnt, bool undefined, LinkedList params)
 {
     if (t == NULL)
         return NULL;
@@ -87,6 +87,7 @@ SymtablePair *symtableAdd(Symtable *t, SymtableKey key, ElType type, int paramsC
     newitem->pair.data.type = type;
     newitem->pair.data.paramsCnt = paramsCnt;
     newitem->pair.data.possiblyUndefined = undefined;
+    newitem->pair.data.parameters = params;
     newitem->next = NULL;
     t->size++;
 

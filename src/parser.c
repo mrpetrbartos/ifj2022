@@ -340,7 +340,8 @@ int parseBody()
             Token variable = parser.currToken;
             GETTOKEN(&parser.currToken)
             CHECKRULE(parseAssign())
-            symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.inIf);
+            LinkedList empty = {.itemCount = 0};
+            symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.inIf, empty);
         }
         // <body> -> expr ; <body>.
         else
@@ -359,7 +360,7 @@ int parseBody()
     return err;
 }
 
-int parseTypeP()
+int parseTypeP(LinkedList *ll)
 {
     if (parser.currToken.type != TOKEN_KEYWORD)
     {
@@ -375,6 +376,8 @@ int parseTypeP()
     case KW_STRING:
     case KW_INT:
     case KW_FLOAT:
+        if (ll != NULL)
+            listInsert(ll, parser.currToken.value.keyword);
         return 0;
 
     default:
@@ -383,10 +386,10 @@ int parseTypeP()
     }
 }
 
-int parseParamsDefN(int *paramsCnt)
+int parseParamsDefN(LinkedList *ll)
 {
     int err = 0;
-    CHECKRULE(parseTypeP())
+    CHECKRULE(parseTypeP(ll))
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_IDENTIFIER_VAR)
     {
@@ -394,30 +397,29 @@ int parseParamsDefN(int *paramsCnt)
         return ERR_SYNTAX_AN;
     }
 
-    symtableAdd(parser.localSymtable, parser.currToken.value.string.content, VAR, -1, parser.inIf);
-
-    ++(*paramsCnt);
+    LinkedList empty = {.itemCount = 0};
+    symtableAdd(parser.localSymtable, parser.currToken.value.string.content, VAR, -1, parser.inIf, empty);
 
     GETTOKEN(&parser.currToken)
     // <params_dn>  -> , <params_dp> <params_n>.
     if (parser.currToken.type == TOKEN_COMMA)
     {
         GETTOKEN(&parser.currToken)
-        return parseParamsDefN(paramsCnt);
+        return parseParamsDefN(ll);
     }
     // <params_dn>  -> .
     else
         return err;
 }
 
-int parseParamsDef(int *paramsCnt)
+int parseParamsDef(LinkedList *ll)
 {
     // <params_dp>  -> .
     if (parser.currToken.type == TOKEN_RIGHT_BRACKET)
         return 0;
     // <params_dp>  -> <type_p> identifier_var <params_dn>.
     else
-        return parseParamsDefN(paramsCnt);
+        return parseParamsDefN(ll);
 }
 
 int parseType()
@@ -432,7 +434,7 @@ int parseType()
         return 0;
 
     // <type> -> ?<type_p>.
-    return parseTypeP();
+    return parseTypeP(NULL);
 }
 
 // <func_def>  -> function identifier_func ( <params_dp> ) : <type> { <pe_body> }.
@@ -465,9 +467,10 @@ int parseFunctionDef()
     }
 
     // TODO: linked list of parameters?
-    int paramsCnt = 0;
+    LinkedList ll;
+    listInit(&ll);
     GETTOKEN(&parser.currToken)
-    CHECKRULE(parseParamsDef(&paramsCnt))
+    CHECKRULE(parseParamsDef(&ll))
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACKET)
     {
@@ -501,7 +504,7 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
-    symtableAdd(parser.symtable, func.value.string.content, FUNC, paramsCnt, parser.inIf);
+    symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount, parser.inIf, ll);
 
     parser.outsideBody = false;
     return err;
@@ -564,18 +567,19 @@ int parse()
         return ERR_SYNTAX_AN;
     }
 
+    LinkedList empty = {.itemCount = 0};
     // Insert builtin functions
-    symtableAdd(parser.symtable, "reads", FUNC, 0, false);
-    symtableAdd(parser.symtable, "readi", FUNC, 0, false);
-    symtableAdd(parser.symtable, "readf", FUNC, 0, false);
-    symtableAdd(parser.symtable, "write", FUNC, -1, false);
-    symtableAdd(parser.symtable, "floatval", FUNC, 1, false);
-    symtableAdd(parser.symtable, "intval", FUNC, 1, false);
-    symtableAdd(parser.symtable, "strval", FUNC, 1, false);
-    symtableAdd(parser.symtable, "strlen", FUNC, 1, false);
-    symtableAdd(parser.symtable, "substr", FUNC, 3, false);
-    symtableAdd(parser.symtable, "ord", FUNC, 1, false);
-    symtableAdd(parser.symtable, "chr", FUNC, 1, false);
+    symtableAdd(parser.symtable, "reads", FUNC, 0, false, empty);
+    symtableAdd(parser.symtable, "readi", FUNC, 0, false, empty);
+    symtableAdd(parser.symtable, "readf", FUNC, 0, false, empty);
+    symtableAdd(parser.symtable, "write", FUNC, -1, false, empty);
+    symtableAdd(parser.symtable, "floatval", FUNC, 1, false, empty);
+    symtableAdd(parser.symtable, "intval", FUNC, 1, false, empty);
+    symtableAdd(parser.symtable, "strval", FUNC, 1, false, empty);
+    symtableAdd(parser.symtable, "strlen", FUNC, 1, false, empty);
+    symtableAdd(parser.symtable, "substr", FUNC, 3, false, empty);
+    symtableAdd(parser.symtable, "ord", FUNC, 1, false, empty);
+    symtableAdd(parser.symtable, "chr", FUNC, 1, false, empty);
 
     GETTOKEN(&parser.currToken)
     return parseProgram();
