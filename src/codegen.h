@@ -13,7 +13,7 @@
  * @brief Prints info about used lang.
  *
  */
-void printHead();
+void genPrintHead();
 
 /**
  * @brief Pushes token's value to stack.
@@ -21,5 +21,9 @@ void printHead();
  * @param t Token whose value should be pushed.
  */
 void genStackPush(Token t);
+
+void genExpressionBegin();
+
+void genExpressionEnd();
 
 #endif

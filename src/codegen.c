@@ -7,11 +7,15 @@
 #include "stdio.h"
 #include "codegen.h"
 
-void printHead()
+void genPrintHead()
 {
     printf(".IFJcode22\n");
-    printf("DEFVAR GF@funcname\n");
-    printf("MOVE GF@funcname string@\\000\n");
+    printf("DEFVAR GF@%%funcname\n");
+    printf("MOVE GF@%%funcname string@main\n");
+    printf("DEFVAR GF@%%exprresult\n");
+    printf("MOVE GF@%%exprresult nil@nil\n");
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
 }
 
 void genStackPush(Token t)
@@ -76,4 +80,24 @@ void genStackPush(Token t)
     default:
         break;
     }
+}
+
+void genExpressionBegin()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+}
+
+void genExpressionEnd()
+{
+    printf("POPS GF@%%exprresult\n");
+    printf("POPFRAME\n");
+}
+
+void genIfBegin()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@%%iftype");
+    printf("TYPE LF@%%iftype GF@%%exprresult");
 }
