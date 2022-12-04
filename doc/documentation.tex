@@ -9,6 +9,11 @@
 \preto\tabular{\setcounter{rule_table_number}{0}}
 \newcounter{rule_table_number}
 \newcommand\rownumber{\stepcounter{rule_table_number}\arabic{rule_table_number}}
+\usepackage{graphics}
+\usepackage{pict2e}
+\usepackage{svg}
+
+\renewcommand{\thempfootnote}{\arabic{mpfootnote}}
 
 \begin{document}
 \begin{titlepage}
@@ -16,13 +21,13 @@
 		\textsc{{\Huge Vysoké učení technické v~Brně\\[0.4em]}}
 		\textsc{{\huge Fakulta informačních technologií}}
 		\vspace{\stretch{0.382}}
-				    
-		{\Large Dokumentace projektu z předmětů IFJ a IAL\\[0.3em]}
+												    
+		{\Large Dokumentace projektu z~předmětů IFJ a IAL\\[0.3em]}
 		\textbf{{\LARGE Implementace překladače imperativního jazyka IFJ22\\[0.4em]}}
 		{\Large Tým xbarto0g, varianta\,--\,TRP}
 		\vspace{\stretch{0.618}}
-				    
-				    
+												    
+												    
 	\end{center}
 	{\large 2. prosince 2022 \hfill
 		\begin{tabular}{c |c}
@@ -35,39 +40,58 @@
 \end{titlepage}
 
 \section{Úvod}
-Cílem projektu je vytvořit program v jazyce C, který načte zdrojový kód zapsaný ve zdrojovém jazyce IFJ22
-a přeloží jej do cílového jazyka IFJcode22. Jazyk IFJ22 je zjednodušenou podmnožinou jazyka PHP. Konkrétně se jedná o variantu zadání s implementací tabulky symbolů pomocí tabulky s rozptýlenými položkami.
+Cílem projektu je vytvořit program v~jazyce C, který načte zdrojový kód zapsaný ve zdrojovém jazyce IFJ22
+a přeloží jej do cílového jazyka IFJcode22. Jazyk IFJ22 je zjednodušenou podmnožinou jazyka PHP. Konkrétně se jedná o~variantu zadání s~implementací tabulky symbolů pomocí tabulky s~rozptýlenými položkami.
 
-\section{Práce v týmu}
-Práci jsme si rozdělili jakožto čtyřčlenný tým, avšak z důvodu nespolupracování a nezájmu jednoho člena jsme byli nuceni si práci přerozdělit a projekt vypracovat pouze ve třech. Vzhledem k časové náročnosti a složitosti daných částí jsme se rozhodli pro nerovnoměrné rozdělení bodů.
+\section{Práce v~týmu}
+Práci jsme si rozdělili jakožto čtyřčlenný tým, avšak z~důvodu nespolupracování a nezájmu jednoho člena jsme byli nuceni si práci přerozdělit a projekt vypracovat pouze ve třech. Vzhledem k~časové náročnosti a složitosti daných částí jsme se rozhodli pro nerovnoměrné rozdělení bodů.
 
 \subsection{Rozdělení práce}
 
 \begin{itemize}
 	\item Petr Bartoš
 	      \begin{itemize}
-	      	\item Syntaktická a sémantická analýza, kostra pro testovaní, tabulka symbolů, Makefile
+	      	\item Návrh gramatik pro syntaktickou analýzu, syntaktická analýza, sémantická analýza, tabulka symbolů, chybové hlášky, kostra pro testování
 	      \end{itemize}
 	\item Tomáš Rajsigl 
 	      \begin{itemize}
-	      	\item Lexikální analýza, dokumentace
+	      	\item Návrh konečného automatu a gramatik pro syntaktickou analýzu, lexikální analýza, testování parseru, dokumentace a prezentace
 	      \end{itemize}
 	\item Lukáš Zedek
 	      \begin{itemize}
-	      	\item Generování cílového kódu, testování, dokumentace
+	      	\item Generování cílového kódu, testování jednotlivých modulů překladače, Makefile, dokumentace a  prezentace
 	      \end{itemize}
 \end{itemize}
 Kontrole kódu, jeho čitelnosti a opravě chyb jsme se věnovali všichni.
 \subsection{Vývojový cyklus}
 Při vypracovávání projektu jsme využívali verzovací systém Git. Pro dané části projektu byly vytvořeny konkrétní branche, kde jsme je testovali a upravovali. Před zahrnutím do master branche byl vyžadován pull request, následný code review a schválení od jednoho či více členů. Součástí vývojového cyklu byl i unit testing. Při každém commitu byly automaticky spuštěny testy a bylo tak hned možné vidět, jaký dopad bude commit mít na výsledný program.
-
-\section{Návrh a implementace překladače}
-Projekt byl rozdělen na několik konrétních částí, které jsou představeny v této kapitole.
 \clearpage
 
-\subsection{Lexikální analýza}
+\section{Návrh a implementace překladače}
+Projekt byl rozdělen na několik konrétních částí, které jsou představeny v~této kapitole.
 
-\subsubsection{Dynamický řetězec}
+\subsection{Lexikální analýza}
+Prvním krokem překladače byl návrh a následná implementace lexikální analýzy. Celý scanner je implementován jako deterministický konečný automat, jehož diagram lze nalézt v~obrázku \ref*{fig:DKA}.
+
+Hlavní funkce tohoto tzv. scanneru je \verb|getToken|, pomocí které se čte znak po znaku ze zdrojového souboru a převádí se na strukturu \verb|Token|, která se skládá z~typu, hodnoty a z~důvodu vypisování chybových hlášek také pozice. Typy tokenu jsou \verb|EOF|, prázdný token, identifikátory, klíčová slova, celé či desetinné číslo, řetězec a~také porovnávací a~aritmetické operátory a~ostatní znaky, které mohou být použity v~jazyce IFJ22. Hodnota tokenu je typu \verb|union| a přiděluje se tokenům \verb|TOKEN_KEYWORD|, \verb|TOKEN_INT|, \verb|TOKEN_FLOAT| a \verb|TOKEN_STRING|.
+ 
+Implementace se nachází ve zdrojovém souboru \verb|scanner.c| a hlavičkovém souboru \verb|scanner.h|. Jedná se o~dlouhý \verb|switch|, kde každý případ \verb|case| je ekvivalentní k~jednomu stavu automatu. Pokud načtený znak nesouhlasí s~žádným znakem, který jazyk povoluje, program je ukončen a~vrací chybu 1. Jinak se přechází do dalších stavů a~načítají se další znaky, dokud nemáme hotový jeden token, tj. dokud nedostaneme \verb|tokenComplete = true| a token potom vracíme a~ukončíme tuto funkci.
+
+
+Pro zpracovávání hexadecimálních a oktálních escape sekvencí v~řetězci máme vytvořena dvě pole o~velikosti 3 a 4, která jsou zpočátku vynulována a poté se postupně
+naplňují přečtenými čísly, vždy na pozici podle toho, kolikáté číslo zrovna uvažujeme a nakonec celé číslo převedeme do ASCII podoby.
+
+\subsubsection{Prolog a epilog}
+Na zpracování prologu jsme se rozhodli vytvořit funkci \verb|initialScan|, která ve scanneru kontroluje první část, a to otevírací značku \verb|<?php|, druhou část -- příkaz aktivující přepínač: \verb|declare(strict_types=1);|, posíláme jakožto jednotlivé tokeny dále syntaktické analýze, ve které provedeme dodatečnou kontrolu.
+
+Pro zavírací značku volitelného epilogu je vytvořen \verb|TOKEN_CLOSING_TAG|, za kterým je očekáván \verb|EOF| a nebo \verb|\n| a poté \verb|EOF|, jinak vrací chybu 1.
+
+\subsubsection{Řetězec s~proměnnou délkou}
+K~zpracovávání identifikátorů a~klíčových slov používáme vlastní strukturu \verb|vStr|, která je implementována ve zdrojovém souboru \verb|vstr.c| a souboru hlavičkovém \verb|vstr.h|.
+
+Jedná se o~pole znaků, které se dynamicky zvětšuje v~závislosti na své délce -- při dosáhnutí aktuální maximální délky řetězce je délka zdvojnásobena. Znaky načítáme a~průběžně ukládáme do dynamického pole
+a~jakmile odcházíme ze stavu identifikátoru, porovnáváme, jestli načtený řetězec není shodný s~nějakým z~klíčových slov a~podle
+toho se rozhodneme, zda vracíme typ a hodnotu tokenu jakožto klíčové slovo či identifikátor.
 
 \subsection{Syntaktická analýza}
 
@@ -84,7 +108,56 @@ Projekt byl rozdělen na několik konrétních částí, které jsou představen
 \subsection{Přílohy}
 
 \subsubsection{Diagram konečného automatu}
-    
+
+\begin{figure}[htp!]
+	\centerline{\includesvg[inkscapelatex=false,width=1.05\columnwidth]{Los_Angeles.svg}}
+	\begin{minipage}{\textwidth}
+		\vspace{1.5em}
+		\caption{Konečný automat\protect\footnote{Z důvodu úspory místa a čitelnosti byly jednotlivé stavy přejmenovány, legenda stavů následuje na další stráně} specifikující lexikální analyzátor}
+		\label{fig:DKA}
+	\end{minipage}
+\end{figure}
+
+\clearpage
+
+\subsubsection*{Legenda}
+\vspace{1.5em}
+\begin{tabular}{l r l r }
+	\verb|S|    & \; \verb|STATE_INITIAL|         & \qquad \verb|/|        & \;  \verb|STATE_SLASH|             \\
+	\verb|ID|   & \; \verb|STATE_IDENTIFIER|      & \qquad  \verb|L_COM|   & \;  \verb|STATE_LINE_COM|          \\
+	\verb|+|    & \; \verb|STATE_PLUS|            & \qquad   \verb|M_COM|  & \;  \verb|STATE_MULTILINE_COM|     \\
+	\verb|-|    & \; \verb|STATE_MINUS|           & \qquad   \verb|M_END|  & \;  \verb|STATE_POT_MULTILINE_END| \\
+	\verb|*|    & \; \verb|STATE_MULTIPLY|        & \qquad    \verb|STR_0| & \;  \verb|STATE_STRING_0|          \\
+	\verb|.|    & \; \verb|STATE_CONCATENATE|     & \qquad   \verb|STR_1|  & \;  \verb|STATE_STRING_1|          \\
+	\verb|=|    & \; \verb|STATE_EQUAL_OR_ASSIGN| & \qquad  \verb|ESC_SQ|  & \;  \verb|STATE_STRING_ESCAPE|     \\
+	\verb|==|   & \; \verb|STATE_EQUAL_0|         & \qquad   \verb|HEX_0|  & \;  \verb|STATE_STRING_HEXA_0|     \\
+	\verb|===|  & \; \verb|STATE_EQUAL_1|         & \qquad   \verb|HEX_1|  & \;  \verb|STATE_STRING_HEXA_1|     \\
+	\verb|<|    & \; \verb|STATE_LESSTHAN|        & \qquad    \verb|OCT_0| & \;  \verb|STATE_STRING_OCTA_0|     \\
+	\verb|>|    & \; \verb|STATE_GREATERTHAN|     & \qquad    \verb|OCT_1| & \;  \verb|STATE_STRING_OCTA_1|     \\
+	\verb|(|    & \; \verb|STATE_LEFT_BRACKET|    & \qquad                 &                                    \\
+	\verb|)|    & \; \verb|STATE_RIGHT_BRACKET|   & \qquad                 &                                    \\
+	\verb|{|    & \; \verb|STATE_LEFT_BRACE|      & \qquad                 &                                    \\
+	\verb|}|    & \; \verb|STATE_RIGHT_BRACE|     & \qquad                 &                                    \\
+	\verb|EOF|  & \; \verb|STATE_EOF|             &                        &                                    \\
+	\verb|?|    & \; \verb|STATE_OPTIONAL|        &                        &                                    \\
+	\verb|?>_0| & \verb|STATE_CLOSING_TAG_0|      &                        &                                    \\
+	\verb|?>_1| & \verb|STATE_CLOSING_TAG_1|      &                        &                                    \\
+	\verb|?>|   & \verb|STATE_CLOSING_TAG_2|      &                        &                                    \\
+	\verb|,|    & \verb|STATE_COMMA|              &                        &                                    \\
+	\verb|:|    & \verb|STATE_COLON|              &                        &                                    \\
+	\verb|;|    & \verb|STATE_SEMICOLON|          &                        &                                    \\
+	\verb|!|    & \verb|STATE_NOT_EQUAL_0|        &                        &                                    \\
+	\verb|!=|   & \verb|STATE_NOT_EQUAL_1|        &                        &                                    \\
+	\verb|!==|  & \verb|STATE_NOT_EQUAL_2|        &                        &                                    \\
+	\verb|$|    & \verb|STATE_VARID_PREFIX|       &                        &                                    \\
+	\verb|INT|  & \verb|STATE_NUMBER|             &                        &                                    \\
+	\verb|E_0|  & \verb|STATE_FLOAT_E_0|          &                        &                                    \\
+	\verb|E_1|  & \verb|STATE_FLOAT_E_1|          &                        &                                    \\
+	\verb|E_2|  & \verb|STATE_FLOAT_E_2|          &                        &                                    \\
+	\verb|FL_0| & \verb|STATE_FLOAT_0|            &                        &                                    \\
+	\verb|FL_1| & \verb|STATE_FLOAT_1|            &                        &                                    \\
+\end{tabular}
+
 \clearpage
 
 \subsubsection{LL\,--\,gramatika}
@@ -92,24 +165,24 @@ Projekt byl rozdělen na několik konrétních částí, které jsou představen
 	\centering
 	\begin{enumerate}[noitemsep]
 		\item \verb|<program>   -> <body_main> <program_e>|
-		      		         
+		      		      		      		      		      		         
 		\item \verb|<program_e> -> |$\varepsilon$
 		\item \verb|<program_e> -> ?>|
-		      		         
+		      		      		      		      		      		         
 		\item \verb|<type_p>    -> float|
 		\item \verb|<type_p>    -> int|
 		\item \verb|<type_p>    -> string|
 		\item \verb|<type>      -> null|
 		\item \verb|<type>      -> <type_p>|
 		\item \verb|<type>      -> ?<type_p>|
-		      		      
+		      		      		      		      		      		      
 		\item \verb|<return>    -> return <return_p>|
 		\item \verb|<return_p>  -> expr|
 		\item \verb|<return_p>  -> |$\varepsilon$
-		      		         
+		      		      		      		      		      		         
 		\item \verb|<body_main> -> <body>|
 		\item \verb|<body_main> -> <func_def> <body>|
-		      		         
+		      		      		      		      		      		         
 		\item \verb|<body>      -> |$\varepsilon$
 		\item \verb|<body>      -> <if> ; <body>|
 		\item \verb|<body>      -> <while> ; <body>|
@@ -118,24 +191,25 @@ Projekt byl rozdělen na několik konrétních částí, které jsou představen
 		\item \verb|<body>      -> indentifier_var = <func> ; <body>|
 		\item \verb|<body>      -> <func> ; <body>|
 		\item \verb|<body>      -> <return> ; <body>|
-		      		         
+		      		      		      		      		      		         
 		\item \verb|<if>        -> if expr { <body> } else { <body> }|
 		\item \verb|<while>     -> while expr { <body> }|
-		      		         
+		      		      		      		      		      		         
 		\item \verb|<params>    -> |$\varepsilon$
 		\item \verb|<params>    -> <type> identifier_var <params_n>|
 		\item \verb|<params>    -> identifier_var <params_n>|
 		\item \verb|<params>    -> expr <params_n>|
 		\item \verb|<params_n>  -> |$\varepsilon$
 		\item \verb|<params_n>  -> , <params_p> <params_n>|
-		      		      
+		      		      		      		      		      		      
 		\item \verb|<params_p>  -> <type> identifier_var|
 		\item \verb|<params_p>  -> identifier_var|
 		\item \verb|<params_p>  -> expr|
-		      		         
-		\item \verb|<func_def>  -> function identifier_func ( <params> ) : <type> { <body> }|
+		      		      		      		      		      		         
+		\item \verb|<func_def>  -> function identifier_func ( <params> ) :| 
+		      \newline \verb |               <type> { <body> }|
 		\item \verb|<func>      -> identifier_func ( <params> )|
-		      		         
+		      		      		      		      		      		         
 	\end{enumerate}
 	\caption{LL\,--\,gramatika řídící syntaktickou analýzu}
 	\label{table:ll-gramatika}
