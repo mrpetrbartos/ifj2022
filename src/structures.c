@@ -60,6 +60,7 @@ void stackFree(Stack *s)
 void listInit(LinkedList *l)
 {
     l->head = NULL;
+    l->itemCount = 0;
 }
 
 int listInsert(LinkedList *l, Keyword type)
