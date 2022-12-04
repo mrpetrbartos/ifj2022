@@ -142,55 +142,43 @@ int getToken(Token *token, bool peek)
             switch (c)
             {
             case '+':
-                token->type = TOKEN_PLUS;
-                tokenComplete = true;
+                state = STATE_PLUS;
                 break;
             case '-':
-                token->type = TOKEN_MINUS;
-                tokenComplete = true;
+                state = STATE_MINUS;
                 break;
             case '*':
-                token->type = TOKEN_MULTIPLY;
-                tokenComplete = true;
+                state = STATE_MULTIPLY;
                 break;
             case '/':
                 state = STATE_SLASH;
                 break;
             case '(':
-                token->type = TOKEN_LEFT_BRACKET;
-                tokenComplete = true;
+                state = STATE_LEFT_BRACKET;
                 break;
             case ')':
-                token->type = TOKEN_RIGHT_BRACKET;
-                tokenComplete = true;
+                state = STATE_RIGHT_BRACKET;
                 break;
             case '{':
-                token->type = TOKEN_LEFT_BRACE;
-                tokenComplete = true;
+                state = STATE_LEFT_BRACE;
                 break;
             case '}':
-                token->type = TOKEN_RIGHT_BRACE;
-                tokenComplete = true;
+                state = STATE_RIGHT_BRACE;
                 break;
             case ',':
-                token->type = TOKEN_COMMA;
-                tokenComplete = true;
+                state = STATE_COMMA;
                 break;
             case ':':
-                token->type = TOKEN_COLON;
-                tokenComplete = true;
+                state = STATE_COLON;
                 break;
             case ';':
-                token->type = TOKEN_SEMICOLON;
-                tokenComplete = true;
+                state = STATE_SEMICOLON;
                 break;
             case '.':
-                token->type = TOKEN_CONCAT;
-                tokenComplete = true;
+                state = STATE_CONCATENATE;
                 break;
             case EOF:
-                token->type = TOKEN_EOF;
-                tokenComplete = true;
+                state = STATE_EOF;
                 break;
             case '?':
                 state = STATE_OPTIONAL;
@@ -211,7 +199,7 @@ int getToken(Token *token, bool peek)
                 state = STATE_VARID_PREFIX;
                 break;
             case '\"':
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 break;
             default:
                 if (isalpha(c) || c == '_')
@@ -241,6 +229,66 @@ int getToken(Token *token, bool peek)
                 break;
             }
             break;
+        case STATE_PLUS:
+            token->type = TOKEN_PLUS;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_MINUS:
+            token->type = TOKEN_MINUS;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_MULTIPLY:
+            token->type = TOKEN_MULTIPLY;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_CONCATENATE:
+            token->type = TOKEN_CONCAT;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_LEFT_BRACKET:
+            token->type = TOKEN_LEFT_BRACKET;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_RIGHT_BRACKET:
+            token->type = TOKEN_RIGHT_BRACKET;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_LEFT_BRACE:
+            token->type = TOKEN_LEFT_BRACE;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_RIGHT_BRACE:
+            token->type = TOKEN_RIGHT_BRACE;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_EOF:
+            token->type = TOKEN_EOF;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_COMMA:
+            token->type = TOKEN_COMMA;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_COLON:
+            token->type = TOKEN_COLON;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
+        case STATE_SEMICOLON:
+            token->type = TOKEN_SEMICOLON;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
         case STATE_LESSTHAN:
             if (c == '=')
                 token->type = TOKEN_LESS_EQUAL;
@@ -267,16 +315,14 @@ int getToken(Token *token, bool peek)
             else
             {
                 token->type = TOKEN_OPTIONAL_TYPE;
-                ungetc(c, sourceFile);
                 tokenComplete = true;
+                ungetc(c, sourceFile);
             }
             break;
         case STATE_CLOSING_TAG_0:
             if (c == EOF)
             {
-                token->type = TOKEN_CLOSING_TAG;
-                tokenComplete = true;
-                ungetc(c, sourceFile);
+                state = STATE_CLOSING_TAG_2;
             }
             else if (c == '\n')
                 state = STATE_CLOSING_TAG_1;
@@ -290,9 +336,7 @@ int getToken(Token *token, bool peek)
         case STATE_CLOSING_TAG_1:
             if (c == EOF)
             {
-                token->type = TOKEN_CLOSING_TAG;
-                tokenComplete = true;
-                ungetc(c, sourceFile);
+                state = STATE_CLOSING_TAG_2;
             }
             else
             {
@@ -300,6 +344,11 @@ int getToken(Token *token, bool peek)
                 printError(0, 0, "Expected EOF after closing tag");
                 return ERR_LEXICAL_AN;
             }
+            break;
+        case STATE_CLOSING_TAG_2:
+            token->type = TOKEN_CLOSING_TAG;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
             break;
         case STATE_NOT_EQUAL_0:
             if (c == '=')
@@ -314,8 +363,7 @@ int getToken(Token *token, bool peek)
         case STATE_NOT_EQUAL_1:
             if (c == '=')
             {
-                token->type = TOKEN_NOT_EQUAL;
-                tokenComplete = true;
+                state = STATE_NOT_EQUAL_2;
             }
             else
             {
@@ -324,23 +372,27 @@ int getToken(Token *token, bool peek)
                 return ERR_LEXICAL_AN;
             }
             break;
+        case STATE_NOT_EQUAL_2:
+            token->type = TOKEN_NOT_EQUAL;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
         case STATE_EQUAL_OR_ASSIGN:
             if (c != '=')
             {
-                ungetc(c, sourceFile);
                 token->type = TOKEN_ASSIGN;
                 tokenComplete = true;
+                ungetc(c, sourceFile);
             }
             else
             {
-                state = STATE_EQUAL;
+                state = STATE_EQUAL_0;
             }
             break;
-        case STATE_EQUAL:
+        case STATE_EQUAL_0:
             if (c == '=')
             {
-                token->type = TOKEN_EQUAL;
-                tokenComplete = true;
+                state = STATE_EQUAL_1;
             }
             else
             {
@@ -349,11 +401,16 @@ int getToken(Token *token, bool peek)
                 return ERR_LEXICAL_AN;
             }
             break;
+        case STATE_EQUAL_1:
+            token->type = TOKEN_EQUAL;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
         case STATE_VARID_PREFIX:
             if (isalpha(c) || c == '_')
             {
-                ungetc(c, sourceFile);
                 state = STATE_VARID;
+                ungetc(c, sourceFile);
             }
             else
             {
@@ -420,8 +477,8 @@ int getToken(Token *token, bool peek)
         case STATE_FLOAT_0:
             if (isdigit(c))
             {
-                ungetc(c, sourceFile);
                 state = STATE_FLOAT_1;
+                ungetc(c, sourceFile);
             }
             else
             {
@@ -464,8 +521,8 @@ int getToken(Token *token, bool peek)
             }
             else if (isdigit(c))
             {
-                ungetc(c, sourceFile);
                 state = STATE_FLOAT_E_1;
+                ungetc(c, sourceFile);
             }
             else
             {
@@ -508,8 +565,13 @@ int getToken(Token *token, bool peek)
                 tokenComplete = true;
             }
             break;
-        case STATE_STRING:
-            if (c < 32 || c == '$')
+        case STATE_STRING_0:
+            if (c == '\n')
+            {
+                lineNum++;
+                charNum = 0;
+            }
+            else if (c < 32 || c == '$')
             {
                 vStrFree(&string);
                 printError(token->pos.line, token->pos.character, "String contains unsupported character(s)");
@@ -517,8 +579,7 @@ int getToken(Token *token, bool peek)
             }
             else if (c == '\"')
             {
-                token->type = TOKEN_STRING;
-                tokenComplete = true;
+                state = STATE_STRING_1;
             }
             else if (c == '\\')
             {
@@ -529,27 +590,32 @@ int getToken(Token *token, bool peek)
                 vStrAppend(&string, c);
             }
             break;
+        case STATE_STRING_1:
+            token->type = TOKEN_STRING;
+            tokenComplete = true;
+            ungetc(c, sourceFile);
+            break;
         case STATE_STRING_ESCAPE:
             switch (c)
             {
             case '\\':
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 vStrAppend(&string, '\\');
                 break;
             case '\"':
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 vStrAppend(&string, '\"');
                 break;
             case 'n':
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 vStrAppend(&string, '\n');
                 break;
             case 't':
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 vStrAppend(&string, '\t');
                 break;
             case '$':
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 vStrAppend(&string, c);
                 break;
             case 'x':
@@ -565,7 +631,7 @@ int getToken(Token *token, bool peek)
                 {
                     vStrAppend(&string, '\\');
                     ungetc(c, sourceFile);
-                    state = STATE_STRING;
+                    state = STATE_STRING_0;
                 }
             }
             break;
@@ -580,7 +646,7 @@ int getToken(Token *token, bool peek)
                 vStrAppend(&string, '\\');
                 vStrAppend(&string, 'x');
                 ungetc(c, sourceFile);
-                state = STATE_STRING;
+                state = STATE_STRING_0;
             }
             break;
         case STATE_STRING_HEXA_1:
@@ -590,11 +656,11 @@ int getToken(Token *token, bool peek)
                 vStrAppend(&string, 'x');
                 vStrAppend(&string, hexa[0]);
                 ungetc(c, sourceFile);
-                state = STATE_STRING;
+                state = STATE_STRING_0;
             }
             else
             {
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 hexa[1] = c;
                 hexa[2] = '\0';
                 char *endPtr = NULL;
@@ -619,7 +685,7 @@ int getToken(Token *token, bool peek)
                 vStrAppend(&string, '\\');
                 vStrAppend(&string, octa[0]);
                 ungetc(c, sourceFile);
-                state = STATE_STRING;
+                state = STATE_STRING_0;
             }
             break;
         case STATE_STRING_OCTA_1:
@@ -629,11 +695,11 @@ int getToken(Token *token, bool peek)
                 vStrAppend(&string, octa[0]);
                 vStrAppend(&string, octa[1]);
                 ungetc(c, sourceFile);
-                state = STATE_STRING;
+                state = STATE_STRING_0;
             }
             else if (c >= '0' && c <= '7')
             {
-                state = STATE_STRING;
+                state = STATE_STRING_0;
                 octa[2] = c;
                 octa[3] = '\0';
                 char *endPtr = NULL;
