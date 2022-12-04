@@ -3,44 +3,51 @@
 <program_e> -> ε
 <program_e> -> ?>
 
-<type_p>	-> float
-<type_p>	-> int
-<type_p>	-> string
-<type>	    -> null
+<type_p>    -> float
+<type_p>    -> int
+<type_p>    -> string
+<type_n>    -> ?<type_p>
+<type>      -> void
 <type>      -> <type_p>
-<type>      -> ?<type_p>
+<type>      -> <type_n>
 
 <return>    -> return <return_p>
 
 <return_p>  -> expr
 <return_p>  -> ε
 
-<body_main> -> <body>
-<body_main> -> <func_def> <body>
+<body_main> -> <body> <body_main>
+<body_main> -> <func_def> <body_main>
+<body_main> -> ε
 
-
-<body>      -> ε
-<body>      -> <if> ; <body>
-<body>      -> <while> ; <body>
+<body>      -> <if> <body>
+<body>      -> <while> <body>
+<body>      -> <return> <body>;
 <body>      -> expr ; <body>
-<body>      -> identifier_var = expr ; <body>
-<body>      -> indentifier_var = <func> ; <body>
+<body>      -> identifier_var = <assign_v> ; <body>
 <body>      -> <func> ; <body>
-<body>      -> <return> ; <body>
 
-<if>        -> if expr { <body> } else { <body> }
-<while>     -> while expr { <body> }
+<assign_v>  -> expr
+<assign_v>  -> <func>
 
-<params>    -> ε
-<params>    -> <type> identifier_var <params_n>
-<params>    -> identifier_var <params_n>
-<params>    -> expr <params_n>
-<params_n>  -> ε
-<params_n>  -> , <params_p> <params_n>
+<pe_body>   -> <body> <pe_body>
+<pe_body>   -> ε
 
-<params_p> -> <type> identifier_var
-<params_p> -> identifier_var
-<params_p> -> expr
+<if>        -> if ( expr ) { <pe_body> } else { <pe_body> }
+<while>     -> while ( expr ) { <pe_body> }
 
-<func_def>  -> function identifier_func ( <params> ) : <type> { <body> }
-<func>      -> identifier_func ( <params> )
+<params_dn>  -> ε
+<params_dn>  -> , <params_dp> <params_n>
+
+<params_dp>  -> <type_n> identifier_var <params_dn>
+<params_dp>  -> ε
+
+<params_cn>  -> ε
+<params_cn>  -> , <params_cp> <params_n>
+
+<params_cp>  -> lit <params_cn>
+<params_cp>  -> identifier_var <params_cn>
+<params_cp>  -> ε
+
+<func_def>  -> function identifier_func ( <params_dp> ) : <type> { <pe_body> }
+<func>      -> identifier_func ( <params_cp> )
