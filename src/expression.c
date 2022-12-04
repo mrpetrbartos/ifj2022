@@ -289,6 +289,8 @@ int parseExpression()
     Token bottom = {.type = DOLLAR};
     stackPush(parser.stack, bottom);
 
+    genExpressionBegin();
+
     while (true)
     {
         switch (getRelation(topmostTerminal(), parser.currToken))
@@ -308,6 +310,7 @@ int parseExpression()
 
         case (O):
             stackFree(parser.stack);
+            genExpressionEnd();
             return 0;
 
         default:

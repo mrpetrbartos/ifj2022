@@ -138,6 +138,8 @@ int parseIf()
 
     CHECKRULE(parseExpression())
 
+    genIfBegin();
+
     // Right bracket is checked by expression parsing
 
     if (parser.currToken.type != TOKEN_LEFT_BRACE)
