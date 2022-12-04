@@ -280,7 +280,7 @@ int parseFunctionCall()
 
     SymtablePair *foundFunction = symtableFind(parser.symtable, parser.currToken.value.string.content);
 
-    if (foundFunction == NULL)
+    if (foundFunction == NULL && !(parser.outsideBody))
     {
         vStrFree(&(parser.currToken.value.string));
         printError(LINENUM, CHARNUM, "Calling an undefined function.");
@@ -299,10 +299,13 @@ int parseFunctionCall()
     GETTOKEN(&parser.currToken)
     CHECKRULE(parseParamsCall(&parametersRealCount))
 
-    if ((parametersRealCount != foundFunction->data.paramsCnt) && foundFunction->data.paramsCnt != -1)
+    if (!parser.outsideBody)
     {
-        printError(LINENUM, CHARNUM, "Wrong number of parameters passed");
-        return ERR_FUNC_VAR;
+        if ((parametersRealCount != foundFunction->data.paramsCnt) && foundFunction->data.paramsCnt != -1)
+        {
+            printError(LINENUM, CHARNUM, "Wrong number of parameters passed");
+            return ERR_FUNC_VAR;
+        }
     }
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACKET)
