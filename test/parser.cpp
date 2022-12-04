@@ -418,7 +418,7 @@ TEST_F(ParserTest, WrongFunction3)
         "function fun();"
         "return 0;";
 
-    TestSc(input, 2);
+    TestSc(input, 3);
 }
 
 TEST_F(ParserTest, WrongFunction4)
@@ -433,7 +433,7 @@ TEST_F(ParserTest, WrongFunction4)
         "$var fun();"
         "return 0;";
 
-    TestSc(input, 2);
+    TestSc(input, 5);
 }
 
 TEST_F(ParserTest, WrongFunction5)
