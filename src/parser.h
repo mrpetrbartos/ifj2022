@@ -8,7 +8,7 @@
 #define H_PARSER
 
 #include "scanner.h"
-#include "stack.h"
+#include "structures.h"
 #include "error.h"
 #include "stdlib.h"
 #include "expression.h"
@@ -18,8 +18,10 @@ typedef struct
 {
     Token currToken;
     bool outsideBody;
+    bool inIf;
     Stack *stack;
     Symtable *symtable;
+    Symtable *localSymtable;
 } Parser;
 
 #define LINENUM parser.currToken.pos.line
@@ -40,23 +42,28 @@ typedef struct
         if (err != 0)   \
             return err; \
     } while (0);
-#define BEGINNINGOFEX()                \
-    do                                 \
-    {                                  \
-        switch (parser.currToken.type) \
-        {                              \
-        case TOKEN_LEFT_BRACKET:       \
-        case TOKEN_STRING:             \
-        case TOKEN_INT:                \
-        case TOKEN_FLOAT:              \
-        case TOKEN_NULL:               \
-        case TOKEN_IDENTIFIER_VAR:     \
-            expr = true;               \
-            break;                     \
-        default:                       \
-            expr = false;              \
-            break;                     \
-        }                              \
+#define BEGINNINGOFEX()                                    \
+    do                                                     \
+    {                                                      \
+        switch (parser.currToken.type)                     \
+        {                                                  \
+        case TOKEN_LEFT_BRACKET:                           \
+        case TOKEN_STRING:                                 \
+        case TOKEN_INT:                                    \
+        case TOKEN_FLOAT:                                  \
+        case TOKEN_IDENTIFIER_VAR:                         \
+            expr = true;                                   \
+            break;                                         \
+        case TOKEN_KEYWORD:                                \
+            if (parser.currToken.value.keyword == KW_NULL) \
+                expr = true;                               \
+            else                                           \
+                expr = false;                              \
+            break;                                         \
+        default:                                           \
+            expr = false;                                  \
+            break;                                         \
+        }                                                  \
     } while (0);
 
 /**
