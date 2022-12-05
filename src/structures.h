@@ -1,11 +1,11 @@
 /**
- * @file stack.h
+ * @file structures.h
  * @author Petr Bartoš (xbarto0g)
- * @brief Header file for stack structure.
+ * @brief Header file for stack and linked list structures.
  */
 
-#ifndef H_STACK
-#define H_STACK
+#ifndef H_STRUCTURES
+#define H_STRUCTURES
 
 #include "scanner.h"
 
@@ -20,6 +20,19 @@ typedef struct
     StackItem *head;
     unsigned len;
 } Stack;
+
+typedef struct ListNode
+{
+    Keyword type;
+    struct ListNode *next;
+} ListNode;
+
+typedef struct
+{
+    struct ListNode *head;
+    struct ListNode *last;
+    int itemCount;
+} LinkedList;
 
 /**
  * @brief Initializes the stack structure.
@@ -50,5 +63,27 @@ void stackPop(Stack *s, Token *t);
  * @param s Pointer to a stack.
  */
 void stackFree(Stack *s);
+
+/**
+ * @brief Initializes linked list.
+ *
+ */
+void listInit(LinkedList *l);
+
+/**
+ * @brief Inserts an item to linked list.
+ *
+ * @param l Pointer to the list.
+ * @param type Type of the parameter.
+ * @return int Non-zero value in case of error, zero otherwise.
+ */
+int listInsert(LinkedList *l, Keyword type);
+
+/**
+ * @brief Frees the space allocated by a list.
+ *
+ * @param l The list to dispose.
+ */
+void listDispose(LinkedList *l);
 
 #endif

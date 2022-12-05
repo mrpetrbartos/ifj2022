@@ -4,6 +4,8 @@ project(ifj2022 CXX C)
 set(CMAKE_C_STANDARD 99)
 set(CMAKE_CXX_STANDARD 20)
 
+set(CMAKE_C_FLAGS --coverage)
+
 # Shamelessly stolen from totok @ https://stackoverflow.com/a/63011172
 # Download and unpack googletest at configure time
 configure_file(CMakeLists.txt.in googletest-download/CMakeLists.txt)
@@ -34,12 +36,21 @@ add_executable(testScanner
         src/scanner.c src/scanner.h 
         src/error.c src/error.h
         src/vstr.c src/vstr.h
+        test/scanner.cpp)
+target_link_libraries(testScanner PRIVATE gcov gtest gtest_main)
+
+add_executable(testParser
+        src/scanner.c src/scanner.h 
+        src/error.c src/error.h
+        src/vstr.c src/vstr.h
         src/expression.c src/expression.h
         src/parser.c src/parser.h
         src/symtable.c src/symtable.h
-        src/stack.c src/stack.h
+        src/structures.c src/structures.h
         test/scanner.cpp
         test/parser.cpp)
-target_link_libraries(testScanner gtest gtest_main)
+target_link_libraries(testParser PRIVATE gcov gtest gtest_main)
+
 
 add_test(scanner testScanner)
+add_test(parser testParser)

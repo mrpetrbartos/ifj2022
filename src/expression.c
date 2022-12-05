@@ -5,6 +5,7 @@
  */
 
 #include "expression.h"
+#include "codegen.h"
 
 extern Parser parser;
 
@@ -42,7 +43,7 @@ int reduceI()
     Token head = parser.stack->head->t;
     if (head.type == TOKEN_IDENTIFIER_VAR)
     {
-        if (symtableFind(parser.symtable, head.value.string.content) == NULL)
+        if (symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, head.value.string.content) == NULL)
         {
             vStrFree(&(head.value.string));
             printError(head.pos.line, head.pos.character, "Undefined variable used in an expression.");
@@ -52,13 +53,16 @@ int reduceI()
 
     Token t;
     stackPop(parser.stack, &t);
-    // TODO: push instr
-    printf("PUSHS %i\n", t.value.integer);
+    if (t.type != TOKEN_IDENTIFIER_VAR)
+        genStackPush(t);
+    else
+    {
+    }
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
     {
         printError(0, 0, "Reduction of expression failed.");
-        return ERR_INTERNAL;
+        return ERR_SYNTAX_AN;
     }
     t.type = REDUCED;
     stackPush(parser.stack, t);
@@ -72,14 +76,13 @@ int reducePlus()
     Token t;
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
-    // TODO: push instr
-    t.type == TOKEN_PLUS ? printf("ADDS\n") : printf("SUBS\n");
+    genStackPush(t);
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
     {
         printError(0, 0, "Reduction of expression failed.");
-        return ERR_INTERNAL;
+        return ERR_SYNTAX_AN;
     }
 
     t.type = REDUCED;
@@ -93,14 +96,13 @@ int reduceMultiply()
     Token t;
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
-    // TODO: push instr
-    t.type == TOKEN_MULTIPLY ? printf("MULS\n") : printf("DIVS\n");
+    genStackPush(t);
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
     {
         printError(0, 0, "Reduction of expression failed.");
-        return ERR_INTERNAL;
+        return ERR_SYNTAX_AN;
     }
 
     t.type = REDUCED;
@@ -115,36 +117,13 @@ int reduceRelation()
     Token t;
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
-    // TODO: push instr
-    switch (t.type)
-    {
-    case TOKEN_GREATER_EQUAL:
-        printf("GTS\n");
-        printf("EQS\n");
-        break;
-
-    case TOKEN_LESS_EQUAL:
-        printf("LTS\n");
-        printf("EQS\n");
-        break;
-
-    case TOKEN_GREATER_THAN:
-        printf("GTS\n");
-        break;
-
-    case TOKEN_LESS_THAN:
-        printf("LTS\n");
-        break;
-
-    default:
-        break;
-    }
+    genStackPush(t);
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
     {
         printError(0, 0, "Reduction of expression failed.");
-        return ERR_INTERNAL;
+        return ERR_SYNTAX_AN;
     }
 
     t.type = REDUCED;
@@ -168,7 +147,7 @@ int reduceComparison()
     if (t.type != SHIFT_SYMBOL)
     {
         printError(0, 0, "Reduction of expression failed.");
-        return ERR_INTERNAL;
+        return ERR_SYNTAX_AN;
     }
 
     t.type = REDUCED;
@@ -187,7 +166,7 @@ int reduceBracket()
     if (t.type != SHIFT_SYMBOL)
     {
         printError(0, 0, "Reduction of expression failed.");
-        return ERR_INTERNAL;
+        return ERR_SYNTAX_AN;
     }
 
     t.type = REDUCED;
@@ -210,7 +189,6 @@ tableIndex getTableIndex(Token t)
     case TOKEN_STRING:
     case TOKEN_INT:
     case TOKEN_FLOAT:
-    case TOKEN_NULL:
     case TOKEN_IDENTIFIER_VAR:
         return I_DATA;
     case TOKEN_GREATER_EQUAL:
@@ -225,6 +203,11 @@ tableIndex getTableIndex(Token t)
         return I_OPENB;
     case TOKEN_RIGHT_BRACKET:
         return I_CLOSEB;
+    case TOKEN_KEYWORD:
+        if (t.value.keyword == KW_NULL)
+            return I_DATA;
+        else
+            return I_DOLLAR;
     default:
         return I_DOLLAR;
     }
@@ -295,13 +278,14 @@ int shift()
     free(putaway);
 
     stackPush(parser.stack, parser.currToken);
-    getToken(&(parser.currToken), false);
+    int err = getToken(&(parser.currToken), false);
 
-    return 0;
+    return err;
 }
 
 int parseExpression()
 {
+    int err = 0;
     Token bottom = {.type = DOLLAR};
     stackPush(parser.stack, bottom);
 
@@ -310,18 +294,16 @@ int parseExpression()
         switch (getRelation(topmostTerminal(), parser.currToken))
         {
         case (R):
-            if (reduce() != 0)
-                return ERR_SYNTAX_AN;
+            err = reduce();
             break;
 
         case (S):
-            if (shift() != 0)
-                return ERR_INTERNAL;
+            err = shift();
             break;
 
         case (E):
             stackPush(parser.stack, parser.currToken);
-            getToken(&(parser.currToken), false);
+            err = getToken(&(parser.currToken), false);
             break;
 
         case (O):
@@ -331,5 +313,8 @@ int parseExpression()
         default:
             return ERR_SYNTAX_AN;
         }
+
+        if (err != 0)
+            return err;
     }
 }
