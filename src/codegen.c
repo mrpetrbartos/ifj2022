@@ -219,12 +219,15 @@ void genMathInstCheck()
     printf("JUMPIFEQ %%ADDS%%SUBS%%check%%2 LF@tmp2%%type string@nil\n");
     printf("EXIT int@7\n");
     printf("LABEL %%ADDS%%SUBS%%check%%2\n");
+    printf("TYPE LF@tmp1%%type LF@tmp1\n");
+    printf("TYPE LF@tmp2%%type LF@tmp2\n");
     printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp1tozero LF@tmp1%%type string@nil\n");
     printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp2tozero LF@tmp2%%type string@nil\n");
     printf("JUMPIFEQ %%math%%check%%exit LF@tmp1%%type LF@tmp2%%type\n");
     printf("LABEL %%ADDS%%SUBS%%check%%3\n");
     printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp1tofloat LF@tmp1%%type string@int\n");
     printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp2tofloat LF@tmp2%%type string@int\n");
+    printf("JUMP %%math%%check%%exit\n");
     printf("LABEL %%ADDS%%SUBS%%check%%tmp1tofloat\n");
     printf("INT2FLOAT LF@tmp1 LF@tmp1\n");
     printf("JUMP %%math%%check%%exit\n");
