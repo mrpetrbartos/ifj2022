@@ -24,7 +24,7 @@ int parserInit()
     parser.outsideBody = false;
     parser.symtable = st;
     parser.localSymtable = stLoc;
-    parser.inIf = false;
+    parser.condDec = false;
     return 0;
 }
 
@@ -75,10 +75,11 @@ int checkPrologue()
 
 int parseBody();
 
+// PeBody as in potentionally empty body
 int parsePeBody()
 {
     int err = 0;
-    //<pe_body> -> .
+    // <pe_body> -> ε
     if (parser.currToken.type == TOKEN_RIGHT_BRACE)
         return 0;
     // <pe_body> -> <body> <pe_body>.
@@ -117,8 +118,12 @@ int parseWhile()
         return ERR_SYNTAX_AN;
     }
 
+    parser.condDec = true;
+
     GETTOKEN(&parser.currToken)
     CHECKRULE(parsePeBody())
+
+    parser.condDec = false;
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACE)
     {
@@ -154,12 +159,12 @@ int parseIf()
         return ERR_SYNTAX_AN;
     }
 
-    parser.inIf = true;
+    parser.condDec = true;
 
     GETTOKEN(&parser.currToken)
     CHECKRULE(parsePeBody())
 
-    parser.inIf = false;
+    parser.condDec = false;
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACE)
     {
@@ -183,8 +188,12 @@ int parseIf()
         return ERR_SYNTAX_AN;
     }
 
+    parser.condDec = true;
+
     GETTOKEN(&parser.currToken)
     CHECKRULE(parsePeBody())
+
+    parser.condDec = false;
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACE)
     {
@@ -219,10 +228,12 @@ int parseReturn()
             return ERR_SYNTAX_AN;
         }
     }
-    // <return_p>  -> .
+    // <return_p>  -> ε
     return err;
 }
 
+// <params_cnp> -> lit
+// <params_cnp> -> identifier_var
 int parseParamsCallN(int *pc)
 {
     int err = 0;
@@ -264,20 +275,20 @@ int parseParamsCallN(int *pc)
     }
 
     GETTOKEN(&parser.currToken)
-    // <params_cn> -> , <params_cp> <params_n>.
+    // <params_cn> -> , <params_cnp> <params_cn>
     if (parser.currToken.type == TOKEN_COMMA)
     {
         GETTOKEN(&parser.currToken)
         return parseParamsCallN(pc);
     }
-    // <params_cn> -> .
+    // <params_cn> -> ε
     else
         return err;
 }
 
 int parseParamsCall(int *pc)
 {
-    // <params_cp> -> .
+    // <params_cp> -> ε
     if (parser.currToken.type == TOKEN_RIGHT_BRACKET)
         return 0;
     // <params_cp> -> lit <params_cn>.
@@ -306,6 +317,7 @@ int parseFunctionCall()
         return ERR_SYNTAX_AN;
     }
 
+    // Holds the number of parameters passed to the called function
     int parametersRealCount = 0;
 
     GETTOKEN(&parser.currToken)
@@ -355,22 +367,23 @@ int parseBody()
     if (parser.currToken.type == TOKEN_KEYWORD)
         switch (parser.currToken.value.keyword)
         {
-        // <body> -> <if> <body>
+        // <body> -> <if>
         case KW_IF:
             CHECKRULE(parseIf())
             break;
 
-        // <body> -> <while> ; <body>
+        // <body> -> <while>
         case KW_WHILE:
             CHECKRULE(parseWhile())
             break;
 
-        // <body> -> <return> ; <body>
+        // <body> -> <return> ;
         case KW_RETURN:
             CHECKRULE(parseReturn())
             CHECKSEMICOLON()
             break;
 
+        // <body> -> expr ;
         case KW_NULL:
             CHECKRULE(parseExpression())
             CHECKSEMICOLON()
@@ -387,16 +400,16 @@ int parseBody()
         if (getToken(&nextToken, true) != 0)
             return ERR_LEXICAL_AN;
 
-        // <body> -> identifier_var = <assign_v> ; <body>.
+        // <body> -> identifier_var = <assign_v> ;
         if (nextToken.type == TOKEN_ASSIGN)
         {
             Token variable = parser.currToken;
             GETTOKEN(&parser.currToken)
             CHECKRULE(parseAssign())
             LinkedList empty = {.itemCount = 0};
-            symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.inIf, empty);
+            symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.condDec, empty);
         }
-        // <body> -> expr ; <body>.
+        // <body> -> expr ;
         else
         {
             CHECKRULE(parseExpression())
@@ -410,7 +423,7 @@ int parseBody()
     }
     else
     {
-        // <body> -> expr ; <body>.
+        // <body> -> expr ;
         CHECKRULE(parseExpression())
         CHECKSEMICOLON()
     }
@@ -444,6 +457,7 @@ int parseTypeP(LinkedList *ll)
     }
 }
 
+// <type_n> -> ?<type_p>.
 int parseTypeN(LinkedList *ll)
 {
     int err = 0;
@@ -472,32 +486,33 @@ int parseParamsDefN(LinkedList *ll)
     }
 
     LinkedList empty = {.itemCount = 0};
-    symtableAdd(parser.localSymtable, parser.currToken.value.string.content, VAR, -1, parser.inIf, empty);
+    symtableAdd(parser.localSymtable, parser.currToken.value.string.content, VAR, -1, parser.condDec, empty);
 
     GETTOKEN(&parser.currToken)
-    // <params_dn>  -> , <params_dp> <params_n>.
+    // <params_dn> -> , <type_n> identifier_var <params_dn>
     if (parser.currToken.type == TOKEN_COMMA)
     {
         GETTOKEN(&parser.currToken)
         return parseParamsDefN(ll);
     }
-    // <params_dn>  -> .
+    // <params_dn>  -> ε
     else
         return err;
 }
 
 int parseParamsDef(LinkedList *ll)
 {
-    // <params_dp>  -> .
+    // <params_dp>  -> ε
     if (parser.currToken.type == TOKEN_RIGHT_BRACKET)
         return 0;
-    // <params_dp>  -> <type_p> identifier_var <params_dn>.
+    // <params_dp>  -> <type_n> identifier_var <params_dn>.
     else
         return parseParamsDefN(ll);
 }
 
 int parseType()
 {
+    // <type> -> <type_n>.
     if (parser.currToken.type == TOKEN_OPTIONAL_TYPE)
     {
         return parseTypeN(NULL);
@@ -507,7 +522,6 @@ int parseType()
     else if (parser.currToken.type == TOKEN_KEYWORD && parser.currToken.value.keyword == KW_VOID)
         return 0;
 
-    // <type> -> ?<type_p>.
     return parseTypeP(NULL);
 }
 
@@ -579,7 +593,7 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
-    symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount, parser.inIf, ll);
+    symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount, parser.condDec, ll);
 
     parser.outsideBody = false;
     return err;
