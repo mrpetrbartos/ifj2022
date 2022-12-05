@@ -105,6 +105,8 @@ int parseWhile()
 
     CHECKRULE(parseExpression())
 
+    genWhileLoop1();
+
     // Right bracket is checked by expression parsing
 
     if (parser.currToken.type != TOKEN_LEFT_BRACE)
@@ -122,6 +124,8 @@ int parseWhile()
         return ERR_SYNTAX_AN;
     }
 
+    genWhileLoop2();
+
     return err;
 }
 
@@ -138,7 +142,7 @@ int parseIf()
 
     CHECKRULE(parseExpression())
 
-    genIfBegin();
+    genIfElse1();
 
     // Right bracket is checked by expression parsing
 
@@ -168,6 +172,8 @@ int parseIf()
         return ERR_SYNTAX_AN;
     }
 
+    genIfElse2();
+
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_LEFT_BRACE)
     {
@@ -183,6 +189,8 @@ int parseIf()
         printError(LINENUM, CHARNUM, "The body of else has to be wrapped by braces (closing).");
         return ERR_SYNTAX_AN;
     }
+
+    genIfElse3();
 
     return err;
 }

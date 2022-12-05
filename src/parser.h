@@ -10,9 +10,10 @@
 #include "scanner.h"
 #include "structures.h"
 #include "error.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include "expression.h"
 #include "symtable.h"
+#include "codegen.h"
 
 typedef struct
 {

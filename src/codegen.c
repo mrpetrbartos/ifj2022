@@ -94,10 +94,83 @@ void genExpressionEnd()
     printf("POPFRAME\n");
 }
 
-void genIfBegin()
+void genCheckTruth()
 {
+    printf("JUMP %%initialskip\n");
+    printf("LABEL %%truthcheck\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
-    printf("DEFVAR LF@%%iftype");
-    printf("TYPE LF@%%iftype GF@%%exprresult");
+    printf("DEFVAR LF@%%iftype\n");
+    printf("TYPE LF@%%iftype GF@%%exprresult\n");
+    printf("DEFVAR LF@%%tmpbool\n");
+    printf("JUMPIFEQ %%iftype%%int LF@%%iftype string@int\n");
+    printf("JUMPIFEQ %%iftype%%float LF@%%iftype string@float\n");
+    printf("JUMPIFEQ %%iftype%%nil LF@%%iftype string@nil\n");
+    printf("LABEL %%iftype%%int\n");
+    printf("EQ LF@%%tmpbool GF@%%exprresult int@0\n");
+    printf("NOT LF@%%tmpbool LF@%%tmpbool\n");
+    printf("MOVE GF@%%exprresult LF@%%tmpbool\n");
+    printf("JUMP %%out\n");
+    printf("LABEL %%iftype%%float\n");
+    printf("EQ LF@%%tmpbool GF@exprresult float@0x0.0p+0\n");
+    printf("NOT LF@%%tmpbool LF@%%tmpbool\n");
+    printf("MOVE GF@%%exprresult LF@%%tmpbool\n");
+    printf("JUMP %%out\n");
+    printf("LABEL %%iftype%%nil\n");
+    printf("MOVE GF@%%exprresult bool@false\n");
+    printf("JUMP %%out\n");
+    printf("LABEL %%iftype%%string\n");
+    printf("EQ LF@%%tmpbool GF@exprresult string@0\n");
+    printf("JUMPIFEQ %%iftype%%string%%false LF@%%tmpbool bool@true\n");
+    printf("EQ LF@%%tmpbool GF@exprresult string@\n");
+    printf("JUMPIFEQ %%iftype%%string%%false LF@%%tmpbool bool@true\n");
+    printf("MOVE GF@%%exprresult bool@true\n");
+    printf("JUMP %%out\n");
+    printf("LABEL %%iftype%%string%%false\n");
+    printf("MOVE GF@%%exprresult bool@false\n");
+    printf("JUMP %%out\n");
+    printf("LABEL %%out\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
+    printf("LABEL %%initialskip\n");
+}
+
+void genIfElse1()
+{
+    static int ifCnt = 0;
+    printf("CALL %%truthcheck\n"); 
+    printf("JUMPIFEQ if%%%d%%else GF@%%exprresult bool@false\n",ifCnt);
+    ++ifCnt;
+}
+
+void genIfElse2()
+{
+    static int ifCnt = 0;
+    printf("JUMP if%%%d%%end\n",ifCnt);
+    printf("LABEL if%%%d%%else\n",ifCnt);
+    ++ifCnt;
+}
+
+void genIfElse3()
+{
+    static int ifCnt = 0;
+    printf("LABEL if%%%d%%end ",ifCnt);
+    ++ifCnt;
+}
+
+void genWhileLoop1()
+{
+    static int whileCnt = 0;
+    printf("LABEL while%%%d%%start\n",whileCnt);
+    printf("CALL %%truthcheck\n"); 
+    printf("JUMPIFEQ while%%%d%%end GF@%%exprresult bool@false\n",whileCnt);
+    ++whileCnt;
+}
+
+void genWhileLoop2()
+{
+    static int whileCnt = 0;
+    printf("JUMP while%%%d%%start\n",whileCnt);
+    printf("LABEL while%%%d%%end\n",whileCnt);
+    ++whileCnt;
 }

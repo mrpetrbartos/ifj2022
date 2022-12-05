@@ -26,4 +26,16 @@ void genExpressionBegin();
 
 void genExpressionEnd();
 
+void genCheckTruth();
+
+void genIfElse1();
+
+void genIfElse2();
+
+void genIfElse3();
+
+void genWhileLoop1();
+
+void genWhileLoop2();
+
 #endif
