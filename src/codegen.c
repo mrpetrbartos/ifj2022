@@ -15,7 +15,7 @@ void genPrintHead()
     printf("DEFVAR GF@%%exprresult\n");
     printf("MOVE GF@%%exprresult nil@nil\n");
     printf("DEFVAR GF@%%curr%%inst\n");
-    printf("MOVE GF@%%curr%%inst nil@nil");
+    printf("MOVE GF@%%curr%%inst nil@nil\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 }
@@ -144,53 +144,54 @@ void genCheckTruth()
 void genIfElse1()
 {
     static int ifCnt = 0;
-    printf("CALL %%truthcheck\n"); 
-    printf("JUMPIFEQ if%%%d%%else GF@%%exprresult bool@false\n",ifCnt);
+    printf("CALL %%truthcheck\n");
+    printf("JUMPIFEQ if%%%d%%else GF@%%exprresult bool@false\n", ifCnt);
     ++ifCnt;
 }
 
 void genIfElse2()
 {
     static int ifCnt = 0;
-    printf("JUMP if%%%d%%end\n",ifCnt);
-    printf("LABEL if%%%d%%else\n",ifCnt);
+    printf("JUMP if%%%d%%end\n", ifCnt);
+    printf("LABEL if%%%d%%else\n", ifCnt);
     ++ifCnt;
 }
 
 void genIfElse3()
 {
     static int ifCnt = 0;
-    printf("LABEL if%%%d%%end ",ifCnt);
+    printf("LABEL if%%%d%%end ", ifCnt);
     ++ifCnt;
 }
 
 void genWhileLoop1()
 {
     static int whileCnt = 0;
-    printf("LABEL while%%%d%%start\n",whileCnt);
+    printf("LABEL while%%%d%%start\n", whileCnt);
     ++whileCnt;
 }
 
 void genWhileLoop2()
 {
     static int whileCnt = 0;
-    printf("CALL %%truthcheck\n"); 
-    printf("JUMPIFEQ while%%%d%%end GF@%%exprresult bool@false\n",whileCnt);
+    printf("CALL %%truthcheck\n");
+    printf("JUMPIFEQ while%%%d%%end GF@%%exprresult bool@false\n", whileCnt);
     ++whileCnt;
 }
 
 void genWhileLoop3()
 {
     static int whileCnt = 0;
-    printf("JUMP while%%%d%%start\n",whileCnt);
-    printf("LABEL while%%%d%%end\n",whileCnt);
+    printf("JUMP while%%%d%%start\n", whileCnt);
+    printf("LABEL while%%%d%%end\n", whileCnt);
     ++whileCnt;
 }
 
 void genMathInstCheck()
 {
+    printf("JUMP %%skipcheck\n");
     printf("LABEL %%math%%check\n");
-    printf("CREATE FRAME\n");
+    printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@tmp1\n");
     printf("DEFVAR LF@tmp1%%type\n");
@@ -207,35 +208,35 @@ void genMathInstCheck()
     printf("JUMPIFEQ %%IDIVS%%check GF@%%curr%%inst string@IDIVS\n");
     printf("JUMPIFEQ %%CONCAT%%check GF@%%curr%%inst string@CONCAT\n");
     printf("JUMP %%math%%check%%exit\n");
-    printf("LABEL %%ADDS%%SUBBS%%check\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%1 LF@tmp1%%type string@int\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%1 LF@tmp1%%type string@float\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%1 LF@tmp1%%type string@nil\n");
+    printf("LABEL %%ADDS%%SUBS%%check\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%1 LF@tmp1%%type string@int\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%1 LF@tmp1%%type string@float\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%1 LF@tmp1%%type string@nil\n");
     printf("EXIT int@7\n");
-    printf("LABEL %%ADDS%%SUBBS%%check%%1\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%2 LF@tmp2%%type string@int\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%2 LF@tmp2%%type string@float\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%2 LF@tmp2%%type string@nil\n");
+    printf("LABEL %%ADDS%%SUBS%%check%%1\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%2 LF@tmp2%%type string@int\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%2 LF@tmp2%%type string@float\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%2 LF@tmp2%%type string@nil\n");
     printf("EXIT int@7\n");
-    printf("LABEL %%ADDS%%SUBBS%%check%%2\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp1tozero LF@tmp1%%type string@nil\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp2tozero LF@tmp2%%type string@nil\n");
+    printf("LABEL %%ADDS%%SUBS%%check%%2\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp1tozero LF@tmp1%%type string@nil\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp2tozero LF@tmp2%%type string@nil\n");
     printf("JUMPIFEQ %%math%%check%%exit LF@tmp1%%type LF@tmp2%%type\n");
-    printf("LABEL %%ADDS%%SUBBS%%check%%3\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp1tofloat LF@tmp1%%type string@int\n");
-    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp2tofloat LF@tmp2%%type string@int\n");
-    printf("LABEL %%ADDS%%SUBBS%%check%%tmp1tofloat\n");
+    printf("LABEL %%ADDS%%SUBS%%check%%3\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp1tofloat LF@tmp1%%type string@int\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check%%tmp2tofloat LF@tmp2%%type string@int\n");
+    printf("LABEL %%ADDS%%SUBS%%check%%tmp1tofloat\n");
     printf("INT2FLOAT LF@tmp1 LF@tmp1\n");
     printf("JUMP %%math%%check%%exit\n");
-    printf("LABEL %%ADDS%%SUBBS%%check%%tmp2tofloat\n");
+    printf("LABEL %%ADDS%%SUBS%%check%%tmp2tofloat\n");
     printf("INT2FLOAT LF@tmp2 LF@tmp2\n");
     printf("JUMP %%math%%check%%exit\n");
-    printf("LABEL %%ADDS%%SUBBS%%check%%tmp1tozero\n");
+    printf("LABEL %%ADDS%%SUBS%%check%%tmp1tozero\n");
     printf("MOVE LF@tmp1 int@0\n");
-    printf("JUMP %%ADDS%%SUBBS%%check%%2\n");
-    printf("LABEL %%ADDS%%SUBBS%%check%%tmp2tozero\n");
+    printf("JUMP %%ADDS%%SUBS%%check%%2\n");
+    printf("LABEL %%ADDS%%SUBS%%check%%tmp2tozero\n");
     printf("MOVE LF@tmp2 int@0\n");
-    printf("JUMP %%ADDS%%SUBBS%%check%%2\n");
+    printf("JUMP %%ADDS%%SUBS%%check%%2\n");
     printf("LABEL %%MULS%%check\n");
     printf("JUMP %%math%%check%%exit\n");
     printf("LABEL %%DIVS%%check\n");
@@ -249,4 +250,5 @@ void genMathInstCheck()
     printf("PUSHS LF@tmp1\n");
     printf("POPFRAME\n");
     printf("RETURN\n");
+    printf("LABEL %%skipcheck\n");
 }

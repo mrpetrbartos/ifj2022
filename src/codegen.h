@@ -22,6 +22,8 @@ void genPrintHead();
  */
 void genStackPush(Token t);
 
+void genMathInstCheck();
+
 void genExpressionBegin();
 
 void genExpressionEnd();
