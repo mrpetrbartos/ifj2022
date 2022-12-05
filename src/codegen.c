@@ -14,6 +14,8 @@ void genPrintHead()
     printf("MOVE GF@%%funcname string@main\n");
     printf("DEFVAR GF@%%exprresult\n");
     printf("MOVE GF@%%exprresult nil@nil\n");
+    printf("DEFVAR GF@%%curr%%inst\n");
+    printf("MOVE GF@%%curr%%inst nil@nil");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 }
@@ -40,10 +42,14 @@ void genStackPush(Token t)
         break;
 
     case TOKEN_PLUS:
+        printf("MOVE GF@%%curr%%inst string@ADDS\n");
+        printf("CALL %%math%%check\n");
         printf("ADDS\n");
         break;
 
     case TOKEN_MINUS:
+        printf("MOVE GF@%%curr%%inst string@SUBS\n");
+        printf("CALL %%math%%check\n");
         printf("SUBS\n");
         break;
 
@@ -183,5 +189,64 @@ void genWhileLoop3()
 
 void genMathInstCheck()
 {
-
+    printf("LABEL %%math%%check\n");
+    printf("CREATE FRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@tmp1\n");
+    printf("DEFVAR LF@tmp1%%type\n");
+    printf("POPS LF@tmp1\n");
+    printf("TYPE LF@tmp1%%type LF@tmp1\n");
+    printf("DEFVAR LF@tmp2\n");
+    printf("DEFVAR LF@tmp2%%type\n");
+    printf("POPS LF@tmp2\n");
+    printf("TYPE LF@tmp2%%type LF@tmp2\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check GF@%%curr%%inst string@ADDS\n");
+    printf("JUMPIFEQ %%ADDS%%SUBS%%check GF@%%curr%%inst string@SUBS\n");
+    printf("JUMPIFEQ %%MULS%%check GF@%%curr%%inst string@MULS\n");
+    printf("JUMPIFEQ %%DIVS%%check GF@%%curr%%inst string@DIVS\n");
+    printf("JUMPIFEQ %%IDIVS%%check GF@%%curr%%inst string@IDIVS\n");
+    printf("JUMPIFEQ %%CONCAT%%check GF@%%curr%%inst string@CONCAT\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%ADDS%%SUBBS%%check\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%1 LF@tmp1%%type string@int\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%1 LF@tmp1%%type string@float\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%1 LF@tmp1%%type string@nil\n");
+    printf("EXIT int@7\n");
+    printf("LABEL %%ADDS%%SUBBS%%check%%1\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%2 LF@tmp2%%type string@int\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%2 LF@tmp2%%type string@float\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%2 LF@tmp2%%type string@nil\n");
+    printf("EXIT int@7\n");
+    printf("LABEL %%ADDS%%SUBBS%%check%%2\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp1tozero LF@tmp1%%type string@nil\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp2tozero LF@tmp2%%type string@nil\n");
+    printf("JUMPIFEQ %%math%%check%%exit LF@tmp1%%type LF@tmp2%%type\n");
+    printf("LABEL %%ADDS%%SUBBS%%check%%3\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp1tofloat LF@tmp1%%type string@int\n");
+    printf("JUMPIFEQ %%ADDS%%SUBBS%%check%%tmp2tofloat LF@tmp2%%type string@int\n");
+    printf("LABEL %%ADDS%%SUBBS%%check%%tmp1tofloat\n");
+    printf("INT2FLOAT LF@tmp1 LF@tmp1\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%ADDS%%SUBBS%%check%%tmp2tofloat\n");
+    printf("INT2FLOAT LF@tmp2 LF@tmp2\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%ADDS%%SUBBS%%check%%tmp1tozero\n");
+    printf("MOVE LF@tmp1 int@0\n");
+    printf("JUMP %%ADDS%%SUBBS%%check%%2\n");
+    printf("LABEL %%ADDS%%SUBBS%%check%%tmp2tozero\n");
+    printf("MOVE LF@tmp2 int@0\n");
+    printf("JUMP %%ADDS%%SUBBS%%check%%2\n");
+    printf("LABEL %%MULS%%check\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%DIVS%%check\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%IDIVS%%check\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%CONCAT%%check\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%math%%check%%exit\n");
+    printf("PUSHS LF@tmp2\n");
+    printf("PUSHS LF@tmp1\n");
+    printf("POPFRAME\n");
+    printf("RETURN\n");
 }
