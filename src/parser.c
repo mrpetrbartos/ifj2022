@@ -103,9 +103,11 @@ int parseWhile()
         return ERR_SYNTAX_AN;
     }
 
+    genWhileLoop1();
+
     CHECKRULE(parseExpression())
 
-    genWhileLoop1();
+    genWhileLoop2();
 
     // Right bracket is checked by expression parsing
 
@@ -124,7 +126,7 @@ int parseWhile()
         return ERR_SYNTAX_AN;
     }
 
-    genWhileLoop2();
+    genWhileLoop3();
 
     return err;
 }

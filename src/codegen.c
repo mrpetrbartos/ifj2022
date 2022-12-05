@@ -32,7 +32,7 @@ void genStackPush(Token t)
         break;
 
     case TOKEN_FLOAT:
-        printf("PUSHS float@%f\n", t.value.decimal);
+        printf("PUSHS float@%a\n", t.value.decimal);
         break;
 
     case TOKEN_KEYWORD:
@@ -162,15 +162,26 @@ void genWhileLoop1()
 {
     static int whileCnt = 0;
     printf("LABEL while%%%d%%start\n",whileCnt);
-    printf("CALL %%truthcheck\n"); 
-    printf("JUMPIFEQ while%%%d%%end GF@%%exprresult bool@false\n",whileCnt);
     ++whileCnt;
 }
 
 void genWhileLoop2()
 {
     static int whileCnt = 0;
+    printf("CALL %%truthcheck\n"); 
+    printf("JUMPIFEQ while%%%d%%end GF@%%exprresult bool@false\n",whileCnt);
+    ++whileCnt;
+}
+
+void genWhileLoop3()
+{
+    static int whileCnt = 0;
     printf("JUMP while%%%d%%start\n",whileCnt);
     printf("LABEL while%%%d%%end\n",whileCnt);
     ++whileCnt;
+}
+
+void genMathInstCheck()
+{
+
 }

@@ -38,4 +38,6 @@ void genWhileLoop1();
 
 void genWhileLoop2();
 
+void genWhileLoop3();
+
 #endif
