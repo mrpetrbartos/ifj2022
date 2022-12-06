@@ -28,7 +28,7 @@ void genStackPush(Token t)
         vStr temp;
         vStrInit(&temp);
         int i, j, c = 0;
-        char esc[5];
+        char esc[5] = "";
         while ((c = t.value.string.content[i]) != '\0')
         {
             if (c < 33 || c == 35 || c == 92 || c > 126)
@@ -128,13 +128,39 @@ void genStackPush(Token t)
 
     case TOKEN_EQUAL:
         printf("MOVE GF@%%curr%%inst string@EQS\n");
+        printf("CALL %%math%%check\n");
         printf("EQS\n");
+        printf("CREATEFRAME\n");
+        printf("PUSHFRAME\n");
+        printf("DEFVAR LF@%%p1\n");
+        printf("POPS LF@%%p1\n");
+        printf("JUMPIFEQ %%bool%%false LF@%%p1 bool@false\n");
+        printf("MOVE LF@%%p1 int@1\n");
+        printf("JUMP %%bool%%out\n");
+        printf("LABEL %%bool%%false\n");
+        printf("MOVE LF@%%p1 int@0\n");
+        printf("LABEL %%bool%%out\n");
+        printf("PUSHS LF@%%p1\n");
+        printf("POPFRAME\n");
         break;
 
     case TOKEN_NOT_EQUAL:
         printf("MOVE GF@%%curr%%inst string@EQS\n");
+        printf("CALL %%math%%check\n");
         printf("EQS\n");
         printf("NOTS\n");
+        printf("CREATEFRAME\n");
+        printf("PUSHFRAME\n");
+        printf("DEFVAR LF@%%p1\n");
+        printf("POPS LF@%%p1\n");
+        printf("JUMPIFEQ %%bool%%false LF@%%p1 bool@false\n");
+        printf("MOVE LF@%%p1 int@1\n");
+        printf("JUMP %%bool%%out\n");
+        printf("LABEL %%bool%%false\n");
+        printf("MOVE LF@%%p1 int@0\n");
+        printf("LABEL %%bool%%out\n");
+        printf("PUSHS LF@%%p1\n");
+        printf("POPFRAME\n");
         break;
 
     default:
@@ -261,6 +287,7 @@ void genMathInstCheck()
     printf("JUMPIFEQ %%ADDS%%SUBS%%MULS%%check GF@%%curr%%inst string@MULS\n");
     printf("JUMPIFEQ %%DIVS%%check GF@%%curr%%inst string@DIVS\n");
     printf("JUMPIFEQ %%CONCAT%%check GF@%%curr%%inst string@CONCAT\n");
+    printf("JUMPIFEQ %%EQS%%check GF@%%curr%%inst string@EQS\n");
     printf("JUMP %%math%%check%%exit\n");
     // addition, subtraction, multiplication type check
     printf("LABEL %%ADDS%%SUBS%%MULS%%check\n");
@@ -328,6 +355,14 @@ void genMathInstCheck()
     printf("LABEL %%DIVS%%check%%tmp2tozero\n");
     printf("MOVE LF@tmp2 int@0\n");
     printf("JUMP %%DIVS%%check%%2\n");
+    // equals type check
+    printf("LABEL %%EQS%%check\n");
+    printf("JUMPIFEQ %%EQS%%check%%1 LF@tmp1%%type LF@tmp2%%type\n");
+    printf("MOVE LF@tmp1 int@0\n");
+    printf("MOVE LF@tmp2 int@1\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%EQS%%check%%1\n");
+    printf("JUMP %%math%%check%%exit\n");
     // concatenation type check
     printf("LABEL %%CONCAT%%check\n");
     printf("JUMPIFEQ %%CONCAT%%check%%1 LF@tmp1%%type string@string\n");
