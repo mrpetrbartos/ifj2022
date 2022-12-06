@@ -138,10 +138,7 @@ int reduceComparison()
     Token t;
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
-    // TODO: push instr
-    printf("AND");
-    if (t.type == TOKEN_NOT_EQUAL)
-        printf("NOT");
+    genStackPush(t);
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)

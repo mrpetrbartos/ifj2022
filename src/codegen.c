@@ -115,11 +115,26 @@ void genStackPush(Token t)
         break;
 
     case TOKEN_GREATER_THAN:
+        printf("MOVE GF@%%curr%%inst string@GTS\n");
+        printf("CALL %%math%%check\n");
         printf("GTS\n");
         break;
 
     case TOKEN_LESS_THAN:
+        printf("MOVE GF@%%curr%%inst string@LTS\n");
+        printf("CALL %%math%%check\n");
         printf("LTS\n");
+        break;
+
+    case TOKEN_EQUAL:
+        printf("MOVE GF@%%curr%%inst string@EQS\n");
+        printf("EQS\n");
+        break;
+
+    case TOKEN_NOT_EQUAL:
+        printf("MOVE GF@%%curr%%inst string@EQS\n");
+        printf("EQS\n");
+        printf("NOTS\n");
         break;
 
     default:
@@ -334,6 +349,7 @@ void genMathInstCheck()
     printf("LABEL %%CONCAT%%check%%tmp2toempty\n");
     printf("MOVE LF@tmp2 string@\n");
     printf("JUMP %%CONCAT%%check%%2\n");
+    // exit for all
     printf("LABEL %%math%%check%%exit\n");
     printf("PUSHS LF@tmp2\n");
     printf("PUSHS LF@tmp1\n");
