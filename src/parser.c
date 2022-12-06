@@ -254,6 +254,7 @@ int parseParamsCallN(int *pc)
     case TOKEN_STRING:
     case TOKEN_INT:
     case TOKEN_FLOAT:
+        genStackPush(parser.currToken);
         ++(*pc);
         break;
 
@@ -261,15 +262,17 @@ int parseParamsCallN(int *pc)
         if (symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, parser.currToken.value.string.content) == NULL)
         {
             vStrFree(&(parser.currToken.value.string));
-            printError(LINENUM, CHARNUM, "Redefinition of function.");
+            printError(LINENUM, CHARNUM, "Passing an undefined var to a function.");
             return ERR_UNDEF_VAR;
         }
+        genStackPush(parser.currToken);
         ++(*pc);
         break;
 
     case TOKEN_KEYWORD:
         if (parser.currToken.value.keyword == KW_NULL)
         {
+            genStackPush(parser.currToken);
             ++(*pc);
             break;
         }
@@ -352,6 +355,8 @@ int parseFunctionCall()
 
     GETTOKEN(&parser.currToken)
 
+    genFuncCall(parser.currToken.value.string.content, parametersRealCount);
+
     return err;
 }
 
@@ -424,7 +429,7 @@ int parseBody()
         {
             Token variable = parser.currToken;
             SymtablePair *alrDefined = symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content);
-            if (alrDefined == NULL)
+            if (alrDefined == NULL || alrDefined->data.possiblyUndefined)
             {
                 genDefineVariable(variable);
             }

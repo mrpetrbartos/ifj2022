@@ -23,6 +23,22 @@ void genPrintHead()
     printf("PUSHFRAME\n");
 }
 
+void genCovertBool()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@%%p1\n");
+    printf("POPS LF@%%p1\n");
+    printf("JUMPIFEQ %%bool%%false LF@%%p1 bool@false\n");
+    printf("MOVE LF@%%p1 int@1\n");
+    printf("JUMP %%bool%%out\n");
+    printf("LABEL %%bool%%false\n");
+    printf("MOVE LF@%%p1 int@0\n");
+    printf("LABEL %%bool%%out\n");
+    printf("PUSHS LF@%%p1\n");
+    printf("POPFRAME\n");
+}
+
 void genStackPush(Token t)
 {
     switch (t.type)
@@ -57,7 +73,7 @@ void genStackPush(Token t)
         break;
 
     case TOKEN_INT:
-        printf("PUSHS int@%i\n", t.value.integer);
+        printf("PUSHS int@%d\n", t.value.integer);
         break;
 
     case TOKEN_FLOAT:
@@ -110,41 +126,34 @@ void genStackPush(Token t)
     case TOKEN_GREATER_EQUAL:
         printf("GTS\n");
         printf("EQS\n");
+        genCovertBool();
         break;
 
     case TOKEN_LESS_EQUAL:
         printf("LTS\n");
         printf("EQS\n");
+        genCovertBool();
         break;
 
     case TOKEN_GREATER_THAN:
         printf("MOVE GF@%%curr%%inst string@GTS\n");
         printf("CALL %%math%%check\n");
         printf("GTS\n");
+        genCovertBool();
         break;
 
     case TOKEN_LESS_THAN:
         printf("MOVE GF@%%curr%%inst string@LTS\n");
         printf("CALL %%math%%check\n");
         printf("LTS\n");
+        genCovertBool();
         break;
 
     case TOKEN_EQUAL:
         printf("MOVE GF@%%curr%%inst string@EQS\n");
         printf("CALL %%math%%check\n");
         printf("EQS\n");
-        printf("CREATEFRAME\n");
-        printf("PUSHFRAME\n");
-        printf("DEFVAR LF@%%p1\n");
-        printf("POPS LF@%%p1\n");
-        printf("JUMPIFEQ %%bool%%false LF@%%p1 bool@false\n");
-        printf("MOVE LF@%%p1 int@1\n");
-        printf("JUMP %%bool%%out\n");
-        printf("LABEL %%bool%%false\n");
-        printf("MOVE LF@%%p1 int@0\n");
-        printf("LABEL %%bool%%out\n");
-        printf("PUSHS LF@%%p1\n");
-        printf("POPFRAME\n");
+        genCovertBool();
         break;
 
     case TOKEN_NOT_EQUAL:
@@ -152,18 +161,7 @@ void genStackPush(Token t)
         printf("CALL %%math%%check\n");
         printf("EQS\n");
         printf("NOTS\n");
-        printf("CREATEFRAME\n");
-        printf("PUSHFRAME\n");
-        printf("DEFVAR LF@%%p1\n");
-        printf("POPS LF@%%p1\n");
-        printf("JUMPIFEQ %%bool%%false LF@%%p1 bool@false\n");
-        printf("MOVE LF@%%p1 int@1\n");
-        printf("JUMP %%bool%%out\n");
-        printf("LABEL %%bool%%false\n");
-        printf("MOVE LF@%%p1 int@0\n");
-        printf("LABEL %%bool%%out\n");
-        printf("PUSHS LF@%%p1\n");
-        printf("POPFRAME\n");
+        genCovertBool();
         break;
 
     case TOKEN_IDENTIFIER_VAR:
@@ -459,23 +457,21 @@ void genMathInstCheck()
     printf("LABEL %%skipcheck\n");
 }
 
-<<<<<<< HEAD
-void genFuncCall()
+void genFuncCall(char *funcname, int parCount)
 {
-    /*
     printf("CREATEFRAME\n");
-    printf("DEFVAR TF@%s%%retval\n",funcname);
-    for (size_t i = 1; i < paramcnt; i++)
+    printf("DEFVAR TF@%s%%retval\n", funcname);
+    for (size_t i = parCount; i < 0; i--)
     {
-        printf("MOVE TF@%s%%p%d LF@%s\n",funcname, i, paramval);
-        printf("DEFVAR TF@%s%%p%d\n",funcname, i);
+        printf("POPS TF@%s%%p%d LF@%s\n", funcname, i, parCount);
+        printf("DEFVAR TF@%s%%p%d\n", funcname, i);
     }
     printf("PUSHFRAME\n");
 
     printf("POPFRAME\n");
     printf("");
-    */
-=======
+}
+
 void genDefineVariable(Token t)
 {
     printf("DEFVAR LF@%s\n", t.value.string.content);
@@ -499,5 +495,4 @@ void genCheckDefined(Token t)
     printf("LABEL %%doesexist%i\n", n);
     printf("POPFRAME\n");
     n++;
->>>>>>> a6ab2dd (Added defined check for codegen)
 }

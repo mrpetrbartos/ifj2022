@@ -49,4 +49,6 @@ void genAssignVariable(Token t);
 
 void genCheckDefined(Token t);
 
+void genFuncCall(char *funcname, int parCount);
+
 #endif
