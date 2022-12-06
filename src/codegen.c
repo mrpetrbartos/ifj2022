@@ -25,7 +25,29 @@ void genStackPush(Token t)
     switch (t.type)
     {
     case TOKEN_STRING:
-        printf("PUSHS string@%s\n", t.value.string.content);
+        vStr temp;
+        vStrInit(&temp);
+        int i, j, c = 0;
+        char esc[5];
+        while ((c = t.value.string.content[i]) != '\0')
+        {
+            if (c < 33 || c == 35 || c == 92 || c > 126)
+            {
+                vStrAppend(&temp, '\\');
+                if (c < 0)
+                    c += 256;
+                sprintf(esc, "%03d", c);
+                for (j = 0; j < 5; j++)
+                {
+                    vStrAppend(&temp, esc[j]);
+                }
+            }
+            else
+                vStrAppend(&temp, c);
+            i++;
+        }
+        printf("PUSHS string@%s\n", temp.content);
+        vStrFree(&temp);
         vStrFree(&t.value.string);
         break;
 
@@ -54,14 +76,29 @@ void genStackPush(Token t)
         break;
 
     case TOKEN_CONCAT:
-        printf("CONCAT\n");
+        printf("MOVE GF@%%curr%%inst string@CONCAT\n");
+        printf("CALL %%math%%check\n");
+        printf("CREATEFRAME\n");
+        printf("PUSHFRAME\n");
+        printf("DEFVAR LF@%%p1\n");
+        printf("DEFVAR LF@%%p2\n");
+        printf("DEFVAR LF@%%result\n");
+        printf("POPS LF@%%p2\n");
+        printf("POPS LF@%%p1\n");
+        printf("CONCAT LF@%%result LF@%%p1 LF@%%p2\n");
+        printf("PUSHS LF@%%result\n");
+        printf("POPFRAME\n");
         break;
 
     case TOKEN_MULTIPLY:
+        printf("MOVE GF@%%curr%%inst string@MULS\n");
+        printf("CALL %%math%%check\n");
         printf("MULS\n");
         break;
 
     case TOKEN_DIVIDE:
+        printf("MOVE GF@%%curr%%inst string@DIVS\n");
+        printf("CALL %%math%%check\n");
         printf("DIVS\n");
         break;
 
@@ -98,6 +135,7 @@ void genExpressionEnd()
 {
     printf("POPS GF@%%exprresult\n");
     printf("POPFRAME\n");
+    printf("WRITE GF@%%exprresult\n");
 }
 
 void genCheckTruth()
@@ -252,7 +290,7 @@ void genMathInstCheck()
     printf("JUMPIFEQ %%DIVS%%check%%2 LF@tmp2%%type string@nil\n");
     printf("EXIT int@7\n");
     printf("LABEL %%DIVS%%check%%2\n");
-    printf("TYPE LF@tmp1%%type LF@tmptmp21\n");
+    printf("TYPE LF@tmp1%%type LF@tmp1\n");
     printf("TYPE LF@tmp2%%type LF@tmp2\n");
     printf("JUMPIFEQ %%DIVS%%check%%tmp1tozero LF@tmp1%%type string@nil\n");
     printf("JUMPIFEQ %%DIVS%%check%%tmp2tozero LF@tmp2%%type string@nil\n");
