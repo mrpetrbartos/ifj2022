@@ -31,18 +31,20 @@ void genPrintHead()
 
 void genCovertBool()
 {
+    static int cnt = 0;
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
     printf("DEFVAR LF@%%p1\n");
     printf("POPS LF@%%p1\n");
-    printf("JUMPIFEQ %%bool%%false LF@%%p1 bool@false\n");
+    printf("JUMPIFEQ %%bool%d%%false LF@%%p1 bool@false\n", cnt);
     printf("MOVE LF@%%p1 int@1\n");
-    printf("JUMP %%bool%%out\n");
-    printf("LABEL %%bool%%false\n");
+    printf("JUMP %%bool%d%%out\n", cnt);
+    printf("LABEL %%bool%d%%false\n", cnt);
     printf("MOVE LF@%%p1 int@0\n");
-    printf("LABEL %%bool%%out\n");
+    printf("LABEL %%bool%d%%out\n", cnt);
     printf("PUSHS LF@%%p1\n");
     printf("POPFRAME\n");
+    cnt++;
 }
 
 void genStackPush(Token t)
@@ -547,6 +549,36 @@ void genChr()
     printf("MOVE GF@%%exprresult TF@strlen%%retval\n");
 }
 
+void genReads()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@Reads%%retval\n");
+    printf("READ LF@Reads%%retval string\n");
+    printf("POPFRAME\n");
+    printf("MOVE GF@%%exprresult TF@Reads%%retval\n");
+}
+
+void genReadi()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@Readi%%retval\n");
+    printf("READ LF@Readi%%retval int\n");
+    printf("POPFRAME\n");
+    printf("MOVE GF@%%exprresult TF@Readi%%retval\n");
+}
+
+void genReadf()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@Readf%%retval\n");
+    printf("READ LF@Readf%%retval float\n");
+    printf("POPFRAME\n");
+    printf("MOVE GF@%%exprresult TF@Readf%%retval\n");
+}
+
 void genFuncDef1(char *funcname, int parCount, LinkedList ll)
 {
 
@@ -611,6 +643,18 @@ void genFuncCall(char *funcname, int paramCount)
     else if (strcmp(funcname, "chr") == 0)
     {
         genChr();
+    }
+    else if (strcmp(funcname, "reads") == 0)
+    {
+        genReads();
+    }
+    else if (strcmp(funcname, "readi") == 0)
+    {
+        genReadi();
+    }
+    else if (strcmp(funcname, "readf") == 0)
+    {
+        genReadf();
     }
     else
     {
