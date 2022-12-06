@@ -27,13 +27,13 @@
 		\textsc{{\Huge Vysoké učení technické v~Brně\\[0.4em]}}
 		\textsc{{\huge Fakulta informačních technologií}}
 		\vspace{\stretch{0.382}}
-																						    
+																										    
 		{\Large Dokumentace projektu z~předmětů IFJ a IAL\\[0.3em]}
 		\textbf{{\LARGE Implementace překladače imperativního jazyka IFJ22\\[0.4em]}}
 		{\Large Tým xbarto0g, varianta\,--\,TRP}
 		\vspace{\stretch{0.618}}
-																						    
-																						    
+																										    
+																										    
 	\end{center}
 	{\large 2. prosince 2022 \hfill
 		\begin{tabular}{c |c}
@@ -59,22 +59,22 @@ Práci jsme si rozdělili jakožto čtyřčlenný tým, avšak z~důvodu nespolu
 \begin{itemize}
 	\item Petr Bartoš
 	      \begin{itemize}
-	      	\item Návrh gramatik pro syntaktickou analýzu, syntaktická analýza, sémantická analýza, tabulka symbolů, chybové hlášky, kostra pro testování
+	      	\item Návrh gramatik pro syntaktickou analýzu, syntaktická analýza a  sémantická analýza, tabulka a zásobník symbolů,  chybové hlášky, kostra pro testování
 	      \end{itemize}
 	\item Tomáš Rajsigl 
 	      \begin{itemize}
-	      	\item Návrh konečného automatu a gramatik pro syntaktickou analýzu, lexikální analýza, testování scanneru a parseru, dokumentace a prezentace
+	      	\item Návrh konečného automatu a gramatik pro syntaktickou analýzu, lexikální analýza, testování jednotlivých částí překladače, dokumentace
 	      \end{itemize}
 	\item Lukáš Zedek
 	      \begin{itemize}
-	      	\item Generování cílového kódu, testování jednotlivých modulů překladače, Makefile, dokumentace a  prezentace
+	      	\item Generování cílového kódu, testování jednotlivých částí překladače, Makefile, dokumentace a prezentace
 	      \end{itemize}
 \end{itemize}
 Kontrole kódu, jeho čitelnosti a opravě chyb jsme se věnovali všichni tři.
 \subsection{Vývojový cyklus}
 Při vypracovávání projektu jsme využívali verzovací systém Git. Zdrojové kódy jsme měli uloženy v~repozitáři webové služby GitHub, díky čemuž jsme měli všichni vždy přístup k~nejnovější verzi projektu. 
 
-Pro dané části projektu byly vytvořeny konkrétní branche, kde jsme je testovali a upravovali. Před zahrnutím do master branche byl vyžadován pull request, následný code review a schválení od jednoho či více členů. 
+Pro dané části projektu byly vytvořeny konkrétní větve, kde jsme je testovali a upravovali. Před zahrnutím do hlavní branche byl vyžadován pull request, následný code review a schválení od jednoho či více členů. 
 
 Součástí vývojového cyklu byl i unit testing. Při každém commitu byly automaticky spuštěny testy a bylo tak hned možné vidět, jaký dopad bude commit mít na výsledný program.
 \clearpage
@@ -83,24 +83,25 @@ Součástí vývojového cyklu byl i unit testing. Při každém commitu byly au
 Projekt byl rozdělen na několik konkrétních částí, které jsou postupně představeny v~této kapitole.
 
 \subsection{Lexikální analýza}
-Prvním krokem překladače byl návrh a následná implementace lexikální analýzy. Celý scanner je implementován jako deterministický konečný automat, jehož diagram lze nalézt v~obrázku \ref{fig:DKA}. Řešení se nachází ve zdrojovém souboru \verb|scanner.c| a hlavičkovém souboru \verb|scanner.h|.
+Prvním krokem překladače byl návrh a následná implementace lexikální analýzy. Celý lexikální analyzátor je implementován jako deterministický konečný automat, jehož diagram lze nalézt v~obrázku \ref{fig:DKA}. Řešení se nachází ve zdrojovém souboru \verb|scanner.c| a hlavičkovém souboru \verb|scanner.h|.
 
-Hlavní funkce tohoto scanneru je \verb|getToken|, pomocí které se čte znak po znaku ze zdrojového souboru a převádí se na strukturu \verb|Token|, která se skládá z~typu, hodnoty a z~důvodu vypisování chybových hlášek\footnote{K nalezení v~souborech \verb|error.{c,h}|} také pozice. Typy tokenu jsou \verb|EOF|, prázdný token, identifikátory, klíčová slova, celé či desetinné číslo, řetězec a~také porovnávací a~aritmetické operátory a~ostatní znaky, které mohou být použity v~jazyce IFJ22. Hodnota tokenu je typu \verb|union| a přiděluje se tokenům \verb|TOKEN_KEYWORD|, \verb|TOKEN_INT|, \verb|TOKEN_FLOAT| a \verb|TOKEN_STRING|.
+Hlavní funkce tohoto lexikálního analyzátoru je \verb|getToken|, pomocí které se čte znak po znaku ze zdrojového souboru a převádí se na strukturu \verb|Token|, která se skládá z~typu, hodnoty a z~důvodu vypisování chybových hlášek\footnote{K nalezení v~souborech \verb|error.{c,h}|.} také pozice. Typy tokenu jsou \verb|EOF|, prázdný token, identifikátory, klíčová slova, celé či desetinné číslo, řetězec a~také porovnávací a~aritmetické operátory a~ostatní znaky, které mohou být použity v~jazyce IFJ22. Hodnota tokenu je typu \verb|union| a přiděluje se tokenům \verb|TOKEN_KEYWORD|, \verb|TOKEN_INT|, \verb|TOKEN_FLOAT| a \verb|TOKEN_STRING|.
 
-V~ojedinělých případech je nutno nahlédnout na další token\footnote{tj. získat stejný token při více voláních}, v~takové situaci je nastaven \verb|bool| \verb|peek| na hodnotu \verb|true|. Token je poté vracen do prvního volání s~parametrem \verb|peek| nastaveným na \verb|false|.
+V~ojedinělých případech je nutno nahlédnout na další token\footnote{Tj. získat stejný token při více voláních.}, v~takové situaci je nastaven \verb|bool| \verb|peek| na hodnotu \verb|true|. Token je poté vracen do prvního volání s~parametrem \verb|peek| nastaveným na \verb|false|.
  
-Jedná se o~dlouhý \verb|switch|, kde každý případ \verb|case| je ekvivalentní k~jednomu stavu automatu. Pokud načtený znak nesouhlasí s~žádným znakem, který jazyk povoluje, program je ukončen a~vrací chybu 1. Jinak se přechází do dalších stavů a~načítají se další znaky, dokud nemáme hotový jeden token, tj. dokud nedostaneme \verb|tokenComplete| \verb|=| \verb|true| a token potom vracíme a~ukončíme tuto funkci. 
+Ve zdrojovém souboru se jedná o~dlouhý \verb|switch|, kde každý případ \verb|case| je ekvivalentní k~jednomu stavu automatu. Pokud načtený znak nesouhlasí s~žádným znakem, který jazyk povoluje, program je ukončen a~vrací chybu 1. Jinak se přechází do dalších stavů a~načítají se další znaky, dokud nemáme hotový jeden token, tj. dokud nedostaneme \verb|tokenComplete| \verb|=| \verb|true| a token potom vracíme a~ukončíme tuto funkci. 
 
 Pro zpracovávání hexadecimálních a oktálních escape sekvencí v~řetězci máme vytvořena dvě pole o~velikosti 3 a 4, která jsou zpočátku vynulována a poté se postupně
 naplňují přečtenými čísly, vždy na pozici podle toho, kolikáté číslo zrovna uvažujeme a nakonec celé číslo převedeme do ASCII podoby.
 
 \subsubsection{Prolog a epilog}
-Na zpracování prologu jsme se rozhodli vytvořit funkci \verb|initialScan|, která ve scanneru kontroluje první část, a to otevírací značku \verb|<?php|, druhou část -- \verb|declare(strict_types=1);| posíláme jakožto jednotlivé tokeny dále syntaktické analýze, ve které provedeme dodatečnou kontrolu.
+\label{prolog}
+Na zpracování prologu jsme se rozhodli vytvořit funkci \verb|initialScan|, která v~lexikálním analyzátoru kontroluje první část, a to otevírací značku \verb|<?php|, druhou část -- \verb|declare(strict_types=1);| posíláme jakožto jednotlivé tokeny dále syntaktické analýze, ve které provedeme dodatečnou kontrolu.
 
 Pro zavírací značku volitelného epilogu je vytvořen \verb|TOKEN_CLOSING_TAG|, za kterým je očekáván \verb|EOF| a nebo \verb|\n| a poté \verb|EOF|, jinak vrací chybu 1.
 
 \subsubsection{Řetězec s~proměnnou délkou}
-K~zpracovávání identifikátorů a~klíčových slov používáme vlastní strukturu \verb|vStr|, která je implementována ve zdrojovém souboru \verb|vstr.c| a souboru hlavičkovém \verb|vstr.h|.
+K~zpracovávání identifikátorů a~klíčových slov používáme vlastní strukturu \verb|vStr|, která je implementována ve zdrojovém souboru \verb|vstr.c| s~příslušným hlavičkovým souborem \verb|vstr.h|.
 
 Jedná se o~pole znaků, které se dynamicky zvětšuje v~závislosti na své délce -- při dosáhnutí aktuální maximální délky řetězce je délka zdvojnásobena. Znaky načítáme a~průběžně ukládáme do dynamického pole
 a~jakmile odcházíme ze stavu identifikátoru, porovnáváme, jestli načtený řetězec není shodný s~nějakým z~klíčových slov a~podle
@@ -112,20 +113,37 @@ Syntaktická analýza, kterou lze nalézt v~souborech \verb|parser.c| a \verb|pa
 
 V~souboru \verb|parser.h| je vytvořena struktura \verb|Parser|, ve které jsou data používaná jak pro syntaktickou, tak sémantickou analýzu. Struktura se skládá z~aktuálního tokenu \verb|Token| \verb|currToken|, ukazatele na tabulku symbolů při vnoření do funkce \verb|Symtable| \verb|*localSymtable|, ukazatele na tabulku symbolů pro hlavní tělo programu \verb|Symtable| \verb|*symtable|, ukazatele na zásobník \verb|Stack| \verb|*stack|, značky pro potenciálně nedefinovanou proměnnou \verb|bool| \verb|condDec| a značky \verb|bool| \verb|outsideBody| pro situaci kdy je prováděna instrukce mimo hlavní tělo programu.
 
-Parser postupně od scanneru získává jednotlivé tokeny, na základě kterých je vybráno derivační pravidlo. Neterminály tvořené těmito tokeny jsou poté rozkládány na primitivnější neterminály, dokud nejsou zcela rozloženy na terminály. Tento rozklad probíhá pomocí rekurzivního volání jednotlivých funkcí pro derivační pravidla. Tyto funkce naleznutelné ve zdrojovém souboru jsou například \verb|parseWhile|, \verb|parseIf| nebo \verb|parseBody| a další.
+Syntaktický analyzátor postupně od lexikálního analyzátoru získává jednotlivé tokeny, na základě kterých je vybráno derivační pravidlo. Neterminály tvořené těmito tokeny jsou poté rozkládány na primitivnější neterminály, dokud nejsou zcela rozloženy na terminály. Tento rozklad probíhá pomocí rekurzivního volání jednotlivých funkcí pro derivační pravidla. Tyto funkce naleznutelné ve zdrojovém souboru jsou například \verb|parseWhile|, \verb|parseIf| nebo \verb|parseBody| a další.
+
+Jak již bylo dříve zmíněno v~sekci \ref{prolog} funkcí \verb|checkPrologue| probíhá v~syntaktickém analyzátoru kontrola druhé části prologu, kde ze lexikálního analyzátoru převzaté tokeny jednotlivě kontrolujeme oproti správnému formátu.
 
 \subsubsection{Precedenční syntaktická analýza}
-Algoritmus pro zpracování výrazů byl implementován v~souladu s~materiály k~předmětu IFJ, tedy metodou zdola nahoru. Řídí se dle precedenční tabulky, která je přiložena v~tabulce \ref{table:prec_table}. Podle ní může nastat 5 stavů a to: \verb|reduce|, \verb|shift|, \verb|equal|, \verb|error| a \verb|ok|.
+Výrazy se zpracovávají odděleně od zpracování syntaxe a to v~souborech \verb|expression.{c,h}|. Algoritmus pro zpracování výrazů byl implementován v~souladu s~materiály k~předmětu IFJ, tedy metodou zdola nahoru řídící se dle precedenční tabulky. V~přílohách se jedná o~tabulku \ref{table:prec_table}, podle které může nastat 5 stavů a to: \verb|reduce|, \verb|shift|, \verb|equal|, \verb|error| a \verb|ok|.
 
-Funkce \verb|parseExpression| postupně načítá tokeny do zásobníku, určuje jejich typ a pomocí tabulky určuje vztah mezi nejvyšším terminálem na zásobníku a tokenem na vstupu. Pokud žádné pravidlo neodpovídá situaci na vrcholu zásobníku, tak je program ukončen a vrací chybu 2. % dává smysl, nebo hovno?
+Funkce \verb|parseExpression| postupně načítá tokeny do zásobníku, určuje jejich typ a pomocí tabulky určuje vztah mezi nejvyšším terminálem na zásobníku a tokenem na vstupu. Pokud žádné pravidlo neodpovídá situaci na vrcholu zásobníku, tak je program ukončen a vrací chybu 2.
+
+
+\subsubsection{Tabulka symbolů}
+Tabulku symbolů\footnote{V souborech \verb|symtable.{c,h}|.} jsme implementovali jako tabulku s~rozptýlenými položkami (hashovací tabulku). Každý index pole ukazuje na lineárně vázaný seznam prvků, které jsou přidávány do tabulky zepředu tak, že nejstarší prvky na daném indexu jsou poslední v~seznamu. Klíčem do hashovací tabulky jsou samotné názvy identifikátorů.
+
+Každý prvek tabulky kromě klíče a~ukazatele na následující prvek obsahuje typ, data pro funkci a~data pro proměnnou. Data pro funkci obsahují počet parametrů a~ukazatel na lineárně vázaný seznam parametrů.
+
+Hashovací funkce byla inspirována z~2.~IJC projektu \cite{IJC2DU}. Použití této hashovací funkce jsme vyhodnotili jako nejvhodnější.
+
+\subsubsection{Zásobník symbolů}
+Pro syntaktickou a sémantickou analýzu jsme implementovali zásobník v~souboru \verb|structures.c|, jehož rozhraní je v~souboru \verb|structures.h|. Má implementovány základní zásobníkové operace jako \verb|stackPush|, \verb|stackPop| a \verb|stackFree|.
 
 V~úvahu by přišla záměna zásobníku za dvousměrně vázaný seznam kvůli jednoduchosti vkládání zarážek. V~případě implementace se zásobníkem je třeba „překážející“ hodnoty dočasně uložit na jiný zásobník a poté vracet zpět, což je neefektivní.
 
-\clearpage
-
 \subsection{Sémantická analýza}
+Sémantická analýza je prováděna podle sémantických pravidel jazyka IFJ22. Z~části se vykonává zároveň se syntaktickou analýzou  a z~části se vykonává až po skončení syntaktické analýzy -- tudíž za běhu programu. Taktéž používá strukturu \verb|Parser|, ve které jsou potřebná data pro sémantické kontroly. 
+
+Na příslušných místech v~souboru \verb|parser.c| jsou tedy prováděny kontroly zda jsou používané funkce a proměnné definované -- pokud ne, tak se pro funkce jedná o~chybu 3 a pro proměnné o~chybu 5. Dále jestli sedí počet/typ parametrů u~volání funkce či typ návratové hodnoty z~funkce, což by v~případě nesplnění byla chyba 4.
+
+Další sémantická kontrola se provádí za běhu programu. V~souboru \verb|codegen.c| kontrolujeme typovou kompatibilitu při operacích s~výrazy. Při takovýchto\footnote{Např. jeden operand typu float a druhý je typu integer.} operacích musíme případně operandy přetypovat.
 
 \subsection{Generování cílového kódu}
+Generování výstupního kódu IFJcode22 je poslední částí našeho překladače. Generátor \verb|codegen.c| se skládá z~několika funkcí, které se volají z~odpovídajících míst v~parseru.
 
 \clearpage
 
@@ -137,7 +155,7 @@ V~úvahu by přišla záměna zásobníku za dvousměrně vázaný seznam kvůli
 	\centerline{\includesvg[inkscapelatex=false,width=1.05\columnwidth]{Los_Angeles.svg}}
 	\begin{minipage}{\textwidth}
 		\vspace{1.5em}
-		\caption{Konečný automat\protect\footnote[2]{Z důvodu úspory místa a čitelnosti byly jednotlivé stavy přejmenovány, legenda stavů následuje na další stráně} specifikující lexikální analyzátor}
+		\caption{Konečný automat\protect\footnote[5]{Z důvodu úspory místa a čitelnosti byly jednotlivé stavy přejmenovány, legenda stavů následuje na další stráně.} specifikující lexikální analyzátor}
 		\label{fig:DKA}
 	\end{minipage}
 \end{figure}
@@ -147,7 +165,7 @@ V~úvahu by přišla záměna zásobníku za dvousměrně vázaný seznam kvůli
 \subsubsection{Legenda}
 \vspace{1.5em}
 \begin{center}
-		    
+				    
 	\begin{tabular}{l r|l r}
 		\verb|S|    & \; \verb|STATE_INITIAL|    \;      & \; \verb|/|       & \;  \verb|STATE_SLASH|             \\
 		\verb|ID|   & \; \verb|STATE_IDENTIFIER|  \;     & \; \verb|L_COM|   & \;  \verb|STATE_LINE_COM|          \\
@@ -191,10 +209,10 @@ V~úvahu by přišla záměna zásobníku za dvousměrně vázaný seznam kvůli
 	\centering
 	\begin{enumerate}[noitemsep]
 		\item \verb|<program>    -> <body_main> <program_e>|
-		      		      		      		      		      		      		      	   
+		      		      		      		      		      		      		      		      		      	   
 		\item \verb|<program_e>  -> |$\varepsilon$
 		\item \verb|<program_e>  -> ?>|
-		      		      		      		      		    		      		      		    
+		      		      		      		      		      		      		    		      		      		    
 		\item \verb|<type_p>     -> float|
 		\item \verb|<type_p>     -> int|
 		\item \verb|<type_p>     -> string|
@@ -202,51 +220,51 @@ V~úvahu by přišla záměna zásobníku za dvousměrně vázaný seznam kvůli
 		\item \verb|<type>       -> void|
 		\item \verb|<type>       -> <type_p>|
 		\item \verb|<type>       -> <type_n>|
-		      		      		      		      		      	      		      	      
+		      		      		      		      		      		      		      	      		      	      
 		\item \verb|<return>     -> return <return_p>|
 		\item \verb|<return_p>   -> expr|
 		\item \verb|<return_p>   -> |$\varepsilon$
-		      		      		      		      		      	      		      		    
+		      		      		      		      		      		      		      	      		      		    
 		\item \verb|<body_main>  -> <body> <body_main>|
 		\item \verb|<body_main>  -> <func_def> <body_main>|
 		\item \verb|<body_main>  -> |$\varepsilon$
-		      		      		      		      		      		      		      	    
+		      		      		      		      		      		      		      		      		      	    
 		\item \verb|<body>       -> <if>|
 		\item \verb|<body>       -> <while>|
 		\item \verb|<body>       -> expr ;|
 		\item \verb|<body>       -> identifier_var = <assign_v> ;|
 		\item \verb|<body>       -> <func> ;|
 		\item \verb|<body>       -> <return> ;|
-		      		      		      		      		              
+		      		      		      		      		      		      		              
 		\item \verb|<assign_v>   -> expr|
 		\item \verb|<assign_v>   -> <func>|
-		      		      		      		      		              
+		      		      		      		      		      		      		              
 		\item \verb|<pe_body>    -> <body> <pe_body>|
 		\item \verb|<pe_body>    -> |$\varepsilon$
-		      		      		      		      		      		      		      	    
+		      		      		      		      		      		      		      		      		      	    
 		\item \verb|<if>         -> if ( expr ) { <pe_body> } else { <pe_body> }|
 		\item \verb|<while>      -> while ( expr ) { <pe_body> }|
-		      		      		      		      		      		      		    	    
+		      		      		      		      		      		      		      		      		    	    
 		\item \verb|<params_dn>  -> |$\varepsilon$
 		\item \verb|<params_dn>  -> , <type_n> identifier_var <params_dn>|
-		      		      		      		      		              
+		      		      		      		      		      		      		              
 		\item \verb|<params_dp>  -> <type_n> identifier_var <params_dn>|
 		\item \verb|<params_dp>  -> |$\varepsilon$
-		      		      		      
+		      		      		      		      		      
 		\item \verb|<params_cnp> -> lit|
 		\item \verb|<params_cnp> -> identifier_var|
-		      		      		      		      		              
+		      		      		      		      		      		      		              
 		\item \verb|<params_cn>  -> |$\varepsilon$
 		\item \verb|<params_cn>  -> , <params_cnp> <params_cn>|
-		         		      		              
+		      		      		         		      		              
 		\item \verb|<params_cp>  -> lit <params_cn>|
 		\item \verb|<params_cp>  -> identifier_var <params_cn>|
 		\item \verb|<params_cp>  -> |$\varepsilon$
-		      		      		      		      		      		      		      	    
+		      		      		      		      		      		      		      		      		      	    
 		\item \verb|<func_def>   -> function identifier_func ( <params_dp> ) :| 
 		      \newline \verb |               <type> { <pe_body> }|
 		\item \verb|<func>       -> identifier_func ( <params_cp> )|
-		      		      		      		      		      		      		      	    
+		      		      		      		      		      		      		      		      		      	    
 	\end{enumerate}
 	\caption{LL\,--\,gramatika řídící syntaktickou analýzu}
 	\label{table:ll-gramatika}
@@ -316,7 +334,7 @@ V~úvahu by přišla záměna zásobníku za dvousměrně vázaný seznam kvůli
 	\end{tabular}
 	\begin{minipage}{\textwidth}
 		\vspace{1.5em}
-		\caption{Precedenční tabulka\protect\footnote[3]{Rel značí relační operátory a Cmp je zkratka pro komparační operátory} použitá při precedenční syntaktické analýze výrazů}
+		\caption{Precedenční tabulka\protect\footnote[6]{Rel značí relační operátory a Cmp je zkratka pro komparační operátory.} použitá při precedenční syntaktické analýze výrazů}
 		\label{table:prec_table}
 	\end{minipage}
 \end{table}
