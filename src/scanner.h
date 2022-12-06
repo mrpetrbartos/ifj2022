@@ -1,6 +1,6 @@
 /**
  * @file scanner.h
- * @author Petr Bartoš (xbarto0g)
+ * @author Tomáš Rajsigl (xrajsi01)
  * @brief Header file for scanner.
  */
 
