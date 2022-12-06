@@ -14,6 +14,10 @@ int parserInit()
     if (s == NULL)
         return ERR_INTERNAL;
     stackInit(s);
+    Stack *sUndef = malloc(sizeof(Stack));
+    if (sUndef == NULL)
+        return ERR_INTERNAL;
+    stackInit(sUndef);
     Symtable *st = symtableInit(1024);
     if (st == NULL)
         return ERR_INTERNAL;
@@ -21,6 +25,7 @@ int parserInit()
     if (stLoc == NULL)
         return ERR_INTERNAL;
     parser.stack = s;
+    parser.undefStack = sUndef;
     parser.outsideBody = false;
     parser.symtable = st;
     parser.localSymtable = stLoc;
@@ -33,6 +38,7 @@ void parserDestroy()
     symtableFree(parser.symtable);
     symtableFree(parser.localSymtable);
     stackFree(parser.stack);
+    stackFree(parser.undefStack);
     free(parser.stack);
 }
 
@@ -149,6 +155,9 @@ int parseIf()
 
     CHECKRULE(parseExpression())
 
+    Token tmp = {.type = DOLLAR};
+    stackPush(parser.undefStack, tmp);
+
     genIfElse1();
 
     // Right bracket is checked by expression parsing
@@ -187,6 +196,9 @@ int parseIf()
         printError(LINENUM, CHARNUM, "The body of else has to be wrapped by braces (opening).");
         return ERR_SYNTAX_AN;
     }
+
+    Token middleDelimiter = {.type = REDUCED};
+    stackPush(parser.undefStack, middleDelimiter);
 
     parser.condDec = true;
 
@@ -303,7 +315,7 @@ int parseFunctionCall()
 
     SymtablePair *foundFunction = symtableFind(parser.symtable, parser.currToken.value.string.content);
 
-    if (foundFunction == NULL && !(parser.outsideBody))
+    if (foundFunction == NULL)
     {
         vStrFree(&(parser.currToken.value.string));
         printError(LINENUM, CHARNUM, "Calling an undefined function.");
@@ -343,7 +355,7 @@ int parseFunctionCall()
     return err;
 }
 
-int parseAssign()
+int parseAssign(Token variable)
 {
     int err = 0;
     GETTOKEN(&parser.currToken)
@@ -357,6 +369,13 @@ int parseAssign()
     {
         CHECKRULE(parseExpression())
     }
+
+    if (parser.condDec)
+    {
+        stackPush(parser.undefStack, variable);
+    }
+    genAssignVariable(variable);
+
     return err;
 }
 
@@ -404,10 +423,19 @@ int parseBody()
         if (nextToken.type == TOKEN_ASSIGN)
         {
             Token variable = parser.currToken;
+            SymtablePair *alrDefined = symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content);
+            if (alrDefined == NULL)
+            {
+                genDefineVariable(variable);
+            }
             GETTOKEN(&parser.currToken)
-            CHECKRULE(parseAssign())
+            CHECKRULE(parseAssign(variable))
             LinkedList empty = {.itemCount = 0};
-            symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.condDec, empty);
+            if (alrDefined == NULL || alrDefined->data.possiblyUndefined)
+            {
+                symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.condDec, empty);
+                fprintf(stderr, "variable: %s possibly undefined: %i\n", variable.value.string.content, parser.condDec);
+            }
         }
         // <body> -> expr ;
         else
@@ -420,6 +448,10 @@ int parseBody()
     {
         CHECKRULE(parseFunctionCall())
         CHECKSEMICOLON()
+    }
+    else if (parser.currToken.type == TOKEN_SEMICOLON)
+    {
+        return ERR_SYNTAX_AN;
     }
     else
     {
@@ -485,6 +517,8 @@ int parseParamsDefN(LinkedList *ll)
         return ERR_SYNTAX_AN;
     }
 
+    stackPush(parser.undefStack, parser.currToken);
+
     LinkedList empty = {.itemCount = 0};
     symtableAdd(parser.localSymtable, parser.currToken.value.string.content, VAR, -1, parser.condDec, empty);
 
@@ -525,10 +559,28 @@ int parseType()
     return parseTypeP(NULL);
 }
 
+int findDuplicateParams()
+{
+    StackItem *curr = parser.undefStack->head;
+    while (curr != NULL)
+    {
+        StackItem *next = curr->next;
+        while (next != NULL)
+        {
+            if (strcmp(next->t.value.string.content, curr->t.value.string.content) == 0)
+                return 1;
+            next = next->next;
+        }
+        curr = curr->next;
+    }
+    return 0;
+}
+
 // <func_def>  -> function identifier_func ( <params_dp> ) : <type> { <pe_body> }.
 int parseFunctionDef()
 {
     int err = 0;
+    stackFree(parser.undefStack);
     parser.outsideBody = true;
 
     GETTOKEN(&parser.currToken)
@@ -554,7 +606,6 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
-    // TODO: linked list of parameters?
     LinkedList ll;
     listInit(&ll);
     GETTOKEN(&parser.currToken)
@@ -593,9 +644,14 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
+    if (findDuplicateParams() != 0)
+    {
+        return ERR_FUNC_VAR;
+    }
     symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount, parser.condDec, ll);
 
     parser.outsideBody = false;
+    stackFree(parser.undefStack);
     return err;
 }
 

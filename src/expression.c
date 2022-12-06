@@ -41,9 +41,11 @@ Token topmostTerminal()
 int reduceI()
 {
     Token head = parser.stack->head->t;
+    SymtablePair *foundVar;
     if (head.type == TOKEN_IDENTIFIER_VAR)
     {
-        if (symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, head.value.string.content) == NULL)
+        foundVar = symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, head.value.string.content);
+        if (foundVar == NULL)
         {
             vStrFree(&(head.value.string));
             printError(head.pos.line, head.pos.character, "Undefined variable used in an expression.");
@@ -57,6 +59,9 @@ int reduceI()
         genStackPush(t);
     else
     {
+        if (foundVar->data.possiblyUndefined)
+            genCheckDefined(t);
+        genStackPush(t);
     }
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -247,6 +252,11 @@ int shift()
 {
     Token shift = {.type = SHIFT_SYMBOL};
     Token topmost = topmostTerminal();
+    if (topmost.type == 999)
+    {
+        printError(parser.currToken.pos.line, parser.currToken.pos.character, "Couldn't shift symbol, invalid expression.");
+        return ERR_SYNTAX_AN;
+    }
     StackItem *tmp = parser.stack->head;
 
     // Prepare stack to temporarily store tokens between

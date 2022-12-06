@@ -7,6 +7,8 @@
 #include "stdio.h"
 #include "codegen.h"
 
+extern Parser parser;
+
 void genPrintHead()
 {
     printf(".IFJcode22\n");
@@ -16,6 +18,7 @@ void genPrintHead()
     printf("MOVE GF@%%exprresult nil@nil\n");
     printf("DEFVAR GF@%%curr%%inst\n");
     printf("MOVE GF@%%curr%%inst nil@nil\n");
+    printf("DEFVAR GF@%%exists\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 }
@@ -27,7 +30,7 @@ void genStackPush(Token t)
     case TOKEN_STRING:
         vStr temp;
         vStrInit(&temp);
-        int i, j, c = 0;
+        int i = 0, j = 0, c = 0;
         char esc[5] = "";
         while ((c = t.value.string.content[i]) != '\0')
         {
@@ -163,6 +166,11 @@ void genStackPush(Token t)
         printf("POPFRAME\n");
         break;
 
+    case TOKEN_IDENTIFIER_VAR:
+        printf("POPFRAME\n");
+        printf("PUSHS LF@%s\n", t.value.string.content);
+        printf("PUSHFRAME\n");
+
     default:
         break;
     }
@@ -233,7 +241,7 @@ void genIfElse1()
 void genIfElse2()
 {
     static int ifCnt = 0;
-    printf("JUMP if%%%d%%end\n", ifCnt);
+    printf("JUMP if%%%d%%ifdefs\n", ifCnt);
     printf("LABEL if%%%d%%else\n", ifCnt);
     ++ifCnt;
 }
@@ -241,7 +249,9 @@ void genIfElse2()
 void genIfElse3()
 {
     static int ifCnt = 0;
-    printf("LABEL if%%%d%%end ", ifCnt);
+    printf("LABEL if%%%d%%ifdefs\n", ifCnt);
+    printf("JUMP if%%%d%%end\n", ifCnt);
+    printf("LABEL if%%%d%%end\n", ifCnt);
     ++ifCnt;
 }
 
@@ -449,6 +459,7 @@ void genMathInstCheck()
     printf("LABEL %%skipcheck\n");
 }
 
+<<<<<<< HEAD
 void genFuncCall()
 {
     /*
@@ -464,4 +475,29 @@ void genFuncCall()
     printf("POPFRAME\n");
     printf("");
     */
+=======
+void genDefineVariable(Token t)
+{
+    printf("DEFVAR LF@%s\n", t.value.string.content);
+}
+
+void genAssignVariable(Token t)
+{
+    printf("MOVE LF@%s GF@%%exprresult\n", t.value.string.content);
+}
+
+void genCheckDefined(Token t)
+{
+    static int n = 0;
+    printf("POPFRAME\n");
+    printf("TYPE GF@%%exists LF@%s\n", t.value.string.content);
+    printf("PUSHFRAME\n");
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("JUMPIFNEQ %%doesexist%i GF@%%exists string@\n", n);
+    printf("EXIT int@5\n");
+    printf("LABEL %%doesexist%i\n", n);
+    printf("POPFRAME\n");
+    n++;
+>>>>>>> a6ab2dd (Added defined check for codegen)
 }

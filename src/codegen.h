@@ -8,6 +8,7 @@
 #define H_CODEGEN
 
 #include "scanner.h"
+#include "parser.h"
 
 /**
  * @brief Prints info about used lang.
@@ -41,5 +42,11 @@ void genWhileLoop1();
 void genWhileLoop2();
 
 void genWhileLoop3();
+
+void genDefineVariable(Token t);
+
+void genAssignVariable(Token t);
+
+void genCheckDefined(Token t);
 
 #endif

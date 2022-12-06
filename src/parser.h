@@ -21,6 +21,7 @@ typedef struct
     bool outsideBody;
     bool condDec; // Indicates conditional declaration
     Stack *stack;
+    Stack *undefStack;
     Symtable *symtable;
     Symtable *localSymtable;
 } Parser;
