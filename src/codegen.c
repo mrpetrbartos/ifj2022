@@ -448,3 +448,20 @@ void genMathInstCheck()
     printf("RETURN\n");
     printf("LABEL %%skipcheck\n");
 }
+
+void genFuncCall()
+{
+    /*
+    printf("CREATEFRAME\n");
+    printf("DEFVAR TF@%s%%retval\n",funcname);
+    for (size_t i = 1; i < paramcnt; i++)
+    {
+        printf("MOVE TF@%s%%p%d LF@%s\n",funcname, i, paramval);
+        printf("DEFVAR TF@%s%%p%d\n",funcname, i);
+    }
+    printf("PUSHFRAME\n");
+
+    printf("POPFRAME\n");
+    printf("");
+    */
+}
