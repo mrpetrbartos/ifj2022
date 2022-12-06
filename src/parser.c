@@ -265,7 +265,7 @@ int parseParamsCallN(int *pc)
             printError(LINENUM, CHARNUM, "Passing an undefined var to a function.");
             return ERR_UNDEF_VAR;
         }
-        genStackPush(parser.currToken);
+        printf("PUSHS LF@%s\n", parser.currToken.value.string.content);
         ++(*pc);
         break;
 
@@ -355,7 +355,7 @@ int parseFunctionCall()
 
     GETTOKEN(&parser.currToken)
 
-    genFuncCall(parser.currToken.value.string.content, parametersRealCount);
+    genFuncCall((char *)foundFunction->key, parametersRealCount);
 
     return err;
 }
@@ -439,7 +439,6 @@ int parseBody()
             if (alrDefined == NULL || alrDefined->data.possiblyUndefined)
             {
                 symtableAdd(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content, VAR, -1, parser.condDec, empty);
-                fprintf(stderr, "variable: %s possibly undefined: %i\n", variable.value.string.content, parser.condDec);
             }
         }
         // <body> -> expr ;
@@ -509,10 +508,12 @@ int parseParamsDefN(LinkedList *ll)
     if (parser.currToken.type != TOKEN_OPTIONAL_TYPE)
     {
         CHECKRULE(parseTypeP(ll))
+        ll->head->opt = false;
     }
     else
     {
         CHECKRULE(parseTypeN(ll))
+        ll->head->opt = true;
     }
 
     GETTOKEN(&parser.currToken)
@@ -521,6 +522,8 @@ int parseParamsDefN(LinkedList *ll)
         printError(LINENUM, CHARNUM, "Type has to be followed by a variable.");
         return ERR_SYNTAX_AN;
     }
+
+    ll->head->name = parser.currToken.value.string.content;
 
     stackPush(parser.undefStack, parser.currToken);
 
@@ -640,20 +643,25 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
+    symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount, parser.condDec, ll);
+
+    if (findDuplicateParams() != 0)
+    {
+        return ERR_FUNC_VAR;
+    }
+
+    genFuncDef1(func.value.string.content, ll.itemCount, ll);
+
     GETTOKEN(&parser.currToken)
     CHECKRULE(parsePeBody())
+
+    genFuncDef2(func.value.string.content);
 
     if (parser.currToken.type != TOKEN_RIGHT_BRACE)
     {
         printError(LINENUM, CHARNUM, "The body of function has to be wrapped by braces (closing).");
         return ERR_SYNTAX_AN;
     }
-
-    if (findDuplicateParams() != 0)
-    {
-        return ERR_FUNC_VAR;
-    }
-    symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount, parser.condDec, ll);
 
     parser.outsideBody = false;
     stackFree(parser.undefStack);

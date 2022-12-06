@@ -49,6 +49,12 @@ void genAssignVariable(Token t);
 
 void genCheckDefined(Token t);
 
-void genFuncCall(char *funcname, int parCount);
+void genFuncDef1(char *funcname, int parCount, LinkedList ll);
+
+void genFuncDef2(char *funcname);
+
+void genFuncCall(char *funcname, int paramCount);
+
+void genPushString(char *str);
 
 #endif

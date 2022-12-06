@@ -190,7 +190,6 @@ void genExpressionEnd()
 {
     printf("POPS GF@%%exprresult\n");
     printf("POPFRAME\n");
-    printf("WRITE GF@%%exprresult\n");
 }
 
 void genCheckTruth()
@@ -476,29 +475,102 @@ void genMathInstCheck()
     printf("LABEL %%skipcheck\n");
 }
 
+void generateWrite(int numofparams)
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    for (int i = numofparams; i > 0; i--)
+    {
+        printf("DEFVAR LF@%%write%d\n", i);
+        printf("POPS LF@%%write%d\n", i);
+    }
+    for (int i = 1; i <= numofparams; i++)
+    {
+        printf("WRITE LF@%%write%d\n", i);
+    }
+    printf("POPFRAME\n");
+}
+
+void genStrLen()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@str\n");
+    printf("DEFVAR LF@type\n");
+    printf("DEFVAR LF@strlen%%retval\n");
+    printf("POPS LF@str\n");
+    printf("TYPE LF@type LF@str\n");
+    printf("JUMPIFEQ %%isstring LF@type string@string\n");
+    printf("EXIT int@4\n");
+    printf("LABEL %%isstring\n");
+    printf("STRLEN LF@strlen%%retval LF@str\n");
+    printf("POPFRAME\n");
+    printf("MOVE GF@%%exprresult TF@strlen%%retval\n");
+}
+
+void genOrd()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@str\n");
+    printf("DEFVAR LF@type\n");
+    printf("DEFVAR LF@strlen%%retval\n");
+    printf("POPS LF@str\n");
+    printf("TYPE LF@type LF@str\n");
+    printf("JUMPIFEQ %%isstring LF@type string@string\n");
+    printf("EXIT int@4\n");
+    printf("LABEL %%isstring\n");
+    printf("STRLEN LF@strlen%%retval LF@str\n");
+    printf("JUMPIFEQ %%ordjump LF@strlen%%retval int@0\n");
+    printf("STRI2INT LF@strlen%%retval LF@str int@0\n");
+    printf("LABEL %%ordjump\n");
+    printf("POPFRAME\n");
+    printf("MOVE GF@%%exprresult TF@strlen%%retval\n");
+}
+
+void genChr()
+{
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@num\n");
+    printf("DEFVAR LF@type\n");
+    printf("DEFVAR LF@strlen%%retval\n");
+    printf("MOVE LF@strlen%%retval string@a\n");
+    printf("POPS LF@num\n");
+    printf("TYPE LF@type LF@num\n");
+    printf("JUMPIFEQ %%isint LF@type string@int\n");
+    printf("EXIT int@4\n");
+    printf("LABEL %%isint\n");
+    printf("INT2CHAR LF@strlen%%retval LF@num\n");
+    printf("LABEL %%ordjump\n");
+    printf("POPFRAME\n");
+    printf("MOVE GF@%%exprresult TF@strlen%%retval\n");
+}
+
 void genFuncDef1(char *funcname, int parCount, LinkedList ll)
 {
-    
+
     printf("JUMP %%jump%%over%%%s\n", funcname);
     printf("LABEL %%func%%%s\n", funcname);
     printf("CREATEFRAME\n");
     printf("DEFVAR TF@%s%%retval\n", funcname);
     ListNode *tmp = ll.head;
-    for (size_t i = parCount; i < 0; i--)
+    fprintf(stderr, "%i\n", parCount);
+    for (size_t i = parCount; i > 0; i--)
     {
         printf("DEFVAR TF@%s\n", tmp->name);
         printf("POPS TF@%s\n", tmp->name);
         tmp = tmp->next;
     }
-    ListNode *tmp = ll.head;
-    for (size_t i = parCount; i < 0; i--)
+    tmp = ll.head;
+    for (size_t i = parCount; i > 0; i--)
     {
         char *matchingType = "";
-        if(tmp->type == 1)
+        if (tmp->type == 1)
         {
             matchingType = "float";
         }
-        else if (tmp->type == 4) 
+        else if (tmp->type == 4)
         {
             matchingType = "int";
         }
@@ -522,11 +594,29 @@ void genFuncDef2(char *funcname)
     printf("LABEL %%jump%%over%%%s\n", funcname);
 }
 
-void genFuncCall(char *funcname)
+void genFuncCall(char *funcname, int paramCount)
 {
-    printf("CALL %%func%%%s\n", funcname);
-    printf("MOVE GF@%%exprresult TF@%s%%retval\n", funcname);
-    
+    if (strcmp(funcname, "write") == 0)
+    {
+        generateWrite(paramCount);
+    }
+    else if (strcmp(funcname, "strlen") == 0)
+    {
+        genStrLen();
+    }
+    else if (strcmp(funcname, "ord") == 0)
+    {
+        genOrd();
+    }
+    else if (strcmp(funcname, "chr") == 0)
+    {
+        genChr();
+    }
+    else
+    {
+        printf("CALL %%func%%%s\n", funcname);
+        printf("MOVE GF@%%exprresult TF@%s%%retval\n", funcname);
+    }
 }
 
 void genDefineVariable(Token t)

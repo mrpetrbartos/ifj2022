@@ -24,6 +24,8 @@ typedef struct
 typedef struct ListNode
 {
     Keyword type;
+    bool opt;
+    char *name;
     struct ListNode *next;
 } ListNode;
 
