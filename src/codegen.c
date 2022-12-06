@@ -19,6 +19,12 @@ void genPrintHead()
     printf("DEFVAR GF@%%curr%%inst\n");
     printf("MOVE GF@%%curr%%inst nil@nil\n");
     printf("DEFVAR GF@%%exists\n");
+    printf("DEFVAR GF@%%corrtype%%1\n");
+    printf("MOVE GF@%%corrtype%%1 nil@nil\n");
+    printf("DEFVAR GF@%%corrtype%%2\n");
+    printf("MOVE GF@%%corrtype%%2 nil@nil\n");
+    printf("DEFVAR GF@%%corrtype%%opt\n");
+    printf("MOVE GF@%%corrtype%%opt nil@nil\n");
     printf("CREATEFRAME\n");
     printf("PUSHFRAME\n");
 }
@@ -454,22 +460,73 @@ void genMathInstCheck()
     printf("PUSHS LF@tmp1\n");
     printf("POPFRAME\n");
     printf("RETURN\n");
+    // type check for function parameters
+    printf("LABEL %%corrtype%%func\n");
+    printf("JUMPIFEQ %%match%%nil%%incl GF@%%corrtype%%opt int@1\n");
+    printf("JUMPIFEQ %%match%%exact GF@%%corrtype%%opt int@0\n");
+    printf("LABEL %%match%%nil%%incl\n");
+    printf("JUMPIFEQ %%match%%passed GF@%%corrtype%%1 GF@%%corrtype%%2\n");
+    printf("JUMPIFEQ %%match%%passed GF@%%corrtype%%1 string@nil\n");
+    printf("EXIT int@4\n");
+    printf("LABEL %%match%%exact\n");
+    printf("JUMPIFEQ %%match%%passed GF@%%corrtype%%1 GF@%%corrtype%%2\n");
+    printf("EXIT int@4\n");
+    printf("LABEL %%match%%passed\n");
+    printf("RETURN\n");
     printf("LABEL %%skipcheck\n");
 }
 
-void genFuncCall(char *funcname, int parCount)
+void genFuncDef1(char *funcname, int parCount, LinkedList ll)
 {
+    
+    printf("JUMP %%jump%%over%%%s\n", funcname);
+    printf("LABEL %%func%%%s\n", funcname);
     printf("CREATEFRAME\n");
     printf("DEFVAR TF@%s%%retval\n", funcname);
+    ListNode *tmp = ll.head;
     for (size_t i = parCount; i < 0; i--)
     {
-        printf("POPS TF@%s%%p%d LF@%s\n", funcname, i, parCount);
-        printf("DEFVAR TF@%s%%p%d\n", funcname, i);
+        printf("DEFVAR TF@%s\n", tmp->name);
+        printf("POPS TF@%s\n", tmp->name);
+        tmp = tmp->next;
+    }
+    ListNode *tmp = ll.head;
+    for (size_t i = parCount; i < 0; i--)
+    {
+        char *matchingType = "";
+        if(tmp->type == 1)
+        {
+            matchingType = "float";
+        }
+        else if (tmp->type == 4) 
+        {
+            matchingType = "int";
+        }
+        else if (tmp->type == 7)
+        {
+            matchingType = "string";
+        }
+        printf("TYPE GF@%%corrtype%%1 TF@%s\n", tmp->name);
+        printf("MOVE GF@%%corrtype%%2 string@%s\n", matchingType);
+        printf("MOVE GF@%%corrtype%%opt int@%d\n", tmp->opt);
+        printf("CALL %%corrtype%%func\n");
+        tmp = tmp->next;
     }
     printf("PUSHFRAME\n");
+}
 
+void genFuncDef2(char *funcname)
+{
     printf("POPFRAME\n");
-    printf("");
+    printf("RETURN\n");
+    printf("LABEL %%jump%%over%%%s\n", funcname);
+}
+
+void genFuncCall(char *funcname)
+{
+    printf("CALL %%func%%%s\n", funcname);
+    printf("MOVE GF@%%exprresult TF@%s%%retval\n", funcname);
+    
 }
 
 void genDefineVariable(Token t)
