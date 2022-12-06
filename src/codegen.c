@@ -37,13 +37,15 @@ void genStackPush(Token t)
                 if (c < 0)
                     c += 256;
                 sprintf(esc, "%03d", c);
-                for (j = 0; j < 5; j++)
+                for (j = 0; j < 3; j++)
                 {
                     vStrAppend(&temp, esc[j]);
                 }
             }
             else
+            {
                 vStrAppend(&temp, c);
+            }
             i++;
         }
         printf("PUSHS string@%s\n", temp.content);
