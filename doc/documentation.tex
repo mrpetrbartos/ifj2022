@@ -103,13 +103,13 @@ Pro zavírací značku volitelného epilogu je vytvořen \verb|TOKEN_CLOSING_TAG
 \subsubsection{Řetězec s~proměnnou délkou}
 K~zpracovávání identifikátorů a~klíčových slov používáme vlastní strukturu \verb|vStr|, která je implementována ve zdrojovém souboru \verb|vstr.c| s~příslušným hlavičkovým souborem \verb|vstr.h|.
 
-Jedná se o~pole znaků, které se dynamicky zvětšuje v~závislosti na své délce -- při dosáhnutí aktuální maximální délky řetězce je délka zdvojnásobena. Znaky načítáme a~průběžně ukládáme do dynamického pole
-a~jakmile odcházíme ze stavu identifikátoru, porovnáváme, jestli načtený řetězec není shodný s~nějakým z~klíčových slov a~podle
-toho se rozhodneme, zda vracíme typ a hodnotu tokenu jakožto klíčové slovo či identifikátor.
+Jedná se o~pole znaků, které se dynamicky zvětšuje v~závislosti na své délce -- při dosáhnutí aktuální maximální délky řetězce je délka zdvojnásobena. 
+
+Znaky načítáme a~průběžně ukládáme do dynamického pole a~jakmile odcházíme ze stavu identifikátoru, porovnáváme, jestli načtený řetězec není shodný s~nějakým z~klíčových slov a~podle toho se rozhodneme, zda vracíme typ a hodnotu tokenu jakožto klíčové slovo či identifikátor.
 \clearpage
 
 \subsection{Syntaktická analýza}
-Syntaktická analýza, kterou lze nalézt v~souborech \verb|parser.c| a \verb|parser.h|, vychazí z~LL\,--\,gramatiky, kterou je možno vidět v~tabulce \ref{table:ll-gramatika}.
+Syntaktická analýza, kterou lze nalézt v~souborech \verb|parser.c| a \verb|parser.h|, vychazí z~LL\,--\,gramatiky, kterou je možno vidět v~tabulce \ref{table:ll-gramatika}. Kvůli dvojí možnosti interpretace tokenu \verb|identifier_var| nejsme schopni na základě LL(1) gramatiky rozhodnout, jakým způsobem bude redukován. Byli jsme tudíž nuceni zvolit LL(2) gramatiku, pomocí které můžeme zjistit zdali se jedná o~přiřazení, nebo o~výraz.
 
 V~souboru \verb|parser.h| je vytvořena struktura \verb|Parser|, ve které jsou data používaná jak pro syntaktickou, tak sémantickou analýzu. Struktura se skládá z~aktuálního tokenu \verb|Token| \verb|currToken|, ukazatele na tabulku symbolů při vnoření do funkce \verb|Symtable| \verb|*localSymtable|, ukazatele na tabulku symbolů pro hlavní tělo programu \verb|Symtable| \verb|*symtable|, ukazatele na zásobník \verb|Stack| \verb|*stack|, značky pro potenciálně nedefinovanou proměnnou \verb|bool| \verb|condDec| a značky \verb|bool| \verb|outsideBody| pro situaci kdy je prováděna instrukce mimo hlavní tělo programu.
 
@@ -128,7 +128,9 @@ Tabulku symbolů\footnote{V souborech \verb|symtable.{c,h}|.} jsme implementoval
 
 Každý prvek tabulky kromě klíče a~ukazatele na následující prvek obsahuje typ, data pro funkci a~data pro proměnnou. Data pro funkci obsahují počet parametrů a~ukazatel na lineárně vázaný seznam parametrů.
 
-Hashovací funkce byla inspirována z~2.~IJC projektu \cite{IJC2DU}. Použití této hashovací funkce jsme vyhodnotili jako nejvhodnější.
+Jelikož jeden z~členů týmu úspěšně absolvoval předmět IJC, rozhodli jsme se využít hashovací funkci a strukturu tabulky symbolů z~2. DÚ tohoto předmětu\cite{IJC2DU}.
+
+\clearpage
 
 \subsubsection{Zásobník symbolů}
 Pro syntaktickou a sémantickou analýzu jsme implementovali zásobník v~souboru \verb|structures.c|, jehož rozhraní je v~souboru \verb|structures.h|. Má implementovány základní zásobníkové operace jako \verb|stackPush|, \verb|stackPop| a \verb|stackFree|.
@@ -138,12 +140,18 @@ V~úvahu by přišla záměna zásobníku za dvousměrně vázaný seznam kvůli
 \subsection{Sémantická analýza}
 Sémantická analýza je prováděna podle sémantických pravidel jazyka IFJ22. Z~části se vykonává zároveň se syntaktickou analýzou  a z~části se vykonává až po skončení syntaktické analýzy -- tudíž za běhu programu. Taktéž používá strukturu \verb|Parser|, ve které jsou potřebná data pro sémantické kontroly. 
 
-Na příslušných místech v~souboru \verb|parser.c| jsou tedy prováděny kontroly zda jsou používané funkce a proměnné definované -- pokud ne, tak se pro funkce jedná o~chybu 3 a pro proměnné o~chybu 5. Dále jestli sedí počet/typ parametrů u~volání funkce či typ návratové hodnoty z~funkce, což by v~případě nesplnění byla chyba 4.
+Na příslušných místech v~souboru \verb|parser.c| jsou tedy prováděny kontroly zda jsou používané funkce a proměnné definované -- pokud ne, tak se pro funkce jedná o~chybu 3 a pro proměnné o~chybu 5. Dále jestli odpovídá počet/typ parametrů u~volání funkce či typ návratové hodnoty z~funkce, což by v~případě nesplnění byla chyba 4.
 
-Další sémantická kontrola se provádí za běhu programu. V~souboru \verb|codegen.c| kontrolujeme typovou kompatibilitu při operacích s~výrazy. Při takovýchto\footnote{Např. jeden operand typu float a druhý je typu integer.} operacích musíme případně operandy přetypovat.
+Další sémantická kontrola se provádí za běhu programu. V~souboru \verb|codegen.c| kontrolujeme typovou kompatibilitu při operacích s~výrazy. Při takovýchto\footnote{Např. jeden operand typu float a druhý typu int.} operacích musíme případně operandy přetypovat.
 
 \subsection{Generování cílového kódu}
-Generování výstupního kódu IFJcode22 je poslední částí našeho překladače. Generátor \verb|codegen.c| se skládá z~několika funkcí, které se volají z~odpovídajících míst v~parseru.
+Generování výstupního kódu IFJcode22 je poslední částí našeho překladače. Generátor \verb|codegen.c| se skládá z~několika funkcí, volaných z~náležité pozice v~syntaktickém analyzátoru. 
+
+Při generování samotného cílového kódu se jako první generuje hlavička, sestávájící ze sekvence tří částí, kdy první část \verb|genPrintHead| obsahuje globální pomocné proměnné a vytváří lokální rámec pro hlavní tělo programu, druhá část \verb|genCheckTruth| obsahující znovupoužitelnou funkci pro vyhodnocení pravdivostní hodnoty libovolného literálu a třetí část \verb|genMathInstCheck|, jež obstarává již zmiňovanou typovou kontrolu a případnou konverzi vstupních proměnných pro aritmetické instrukce\footnote{Příkladem mohou být instrukce \verb|ADDS|, \verb|SUBS|, \verb|MULS|.}.
+
+Kód následující hlavičce je poté generován dle předaných tokenů ze syntaktického analyzátoru. Generování kódu funkcí definovaných uživatelem je možné díky univerzálním funkcím \verb|genFuncDef| definující tělo funkce a \verb|genFuncCall|, která tyto funkce následně volá. Obdobně funguje funkce \verb|genIfElse| definující tělo podmíněného příkazu. Generování vestavěných funkcí jazyka IFJ22 je implementováno pro každou z~nich samostatně.
+
+Speciální pozornost vyžadoval výpis řetězců, jejichž formát musel být změněn na formát předepsaný jazykem IFJcode22. Změna formátu probíhá ve funkci \verb|genStackPush|, která se mimo jiné stará o~přesun hodnot tokenů na zásobník.
 
 \clearpage
 
@@ -155,7 +163,7 @@ Generování výstupního kódu IFJcode22 je poslední částí našeho překlad
 	\centerline{\includesvg[inkscapelatex=false,width=1.05\columnwidth]{Los_Angeles.svg}}
 	\begin{minipage}{\textwidth}
 		\vspace{1.5em}
-		\caption{Konečný automat\protect\footnote[5]{Z důvodu úspory místa a čitelnosti byly jednotlivé stavy přejmenovány, legenda stavů následuje na další stráně.} specifikující lexikální analyzátor}
+		\caption{Konečný automat\protect\footnote[6]{Z důvodu úspory místa a čitelnosti byly jednotlivé stavy přejmenovány, legenda stavů následuje na další straně.} specifikující lexikální analyzátor}
 		\label{fig:DKA}
 	\end{minipage}
 \end{figure}
@@ -334,7 +342,7 @@ Generování výstupního kódu IFJcode22 je poslední částí našeho překlad
 	\end{tabular}
 	\begin{minipage}{\textwidth}
 		\vspace{1.5em}
-		\caption{Precedenční tabulka\protect\footnote[6]{Rel značí relační operátory a Cmp je zkratka pro komparační operátory.} použitá při precedenční syntaktické analýze výrazů}
+		\caption{Precedenční tabulka\protect\footnote[7]{Rel značí relační operátory a Cmp je zkratka pro komparační operátory.} použitá při precedenční syntaktické analýze výrazů}
 		\label{table:prec_table}
 	\end{minipage}
 \end{table}
