@@ -208,13 +208,15 @@ void genCheckTruth()
     printf("JUMPIFEQ %%iftype%%int LF@%%iftype string@int\n");
     printf("JUMPIFEQ %%iftype%%float LF@%%iftype string@float\n");
     printf("JUMPIFEQ %%iftype%%nil LF@%%iftype string@nil\n");
+    printf("JUMPIFEQ %%iftype%%string LF@%%iftype string@string\n");
+    printf("EXIT \n"); //TODO chyba pokud string@string
     printf("LABEL %%iftype%%int\n");
     printf("EQ LF@%%tmpbool GF@%%exprresult int@0\n");
     printf("NOT LF@%%tmpbool LF@%%tmpbool\n");
     printf("MOVE GF@%%exprresult LF@%%tmpbool\n");
     printf("JUMP %%out\n");
     printf("LABEL %%iftype%%float\n");
-    printf("EQ LF@%%tmpbool GF@exprresult float@0x0.0p+0\n");
+    printf("EQ LF@%%tmpbool GF@%%exprresult float@0x0.0p+0\n");
     printf("NOT LF@%%tmpbool LF@%%tmpbool\n");
     printf("MOVE GF@%%exprresult LF@%%tmpbool\n");
     printf("JUMP %%out\n");
@@ -222,10 +224,8 @@ void genCheckTruth()
     printf("MOVE GF@%%exprresult bool@false\n");
     printf("JUMP %%out\n");
     printf("LABEL %%iftype%%string\n");
-    printf("EQ LF@%%tmpbool GF@exprresult string@0\n");
-    printf("JUMPIFEQ %%iftype%%string%%false LF@%%tmpbool bool@true\n");
-    printf("EQ LF@%%tmpbool GF@exprresult string@\n");
-    printf("JUMPIFEQ %%iftype%%string%%false LF@%%tmpbool bool@true\n");
+    printf("JUMPIFEQ %%iftype%%string%%false GF@%%exprresult string@0\n");
+    printf("JUMPIFEQ %%iftype%%string%%false GF@%%exprresult string@\n");
     printf("MOVE GF@%%exprresult bool@true\n");
     printf("JUMP %%out\n");
     printf("LABEL %%iftype%%string%%false\n");
@@ -665,6 +665,14 @@ void genStrval()
     printf("MOVE GF@%%exprresult TF@%%strval%%%d%%retval\n", n);
     n++;
 }
+
+void genSubstring()
+{
+    static int n = 0;
+    
+    n++;
+}
+
 void genFuncDef1(char *funcname, int parCount, LinkedList ll)
 {
 
@@ -754,6 +762,10 @@ void genFuncCall(char *funcname, int paramCount, ListNode *returnType)
     else if (strcmp(funcname, "strval") == 0)
     {
         genStrval();
+    }
+    else if (strcmp(funcname, "substring") == 0)
+    {
+        genSubstring();
     }
     else
     {
