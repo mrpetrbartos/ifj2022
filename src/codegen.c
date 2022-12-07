@@ -29,7 +29,7 @@ void genPrintHead()
     printf("PUSHFRAME\n");
 }
 
-void genCovertBool()
+void genConvertBool()
 {
     static int cnt = 0;
     printf("CREATEFRAME\n");
@@ -145,7 +145,7 @@ void genStackPush(Token t)
         printf("PUSHS LF@GTE%%tmp\n");
         printf("ORS\n");
         printf("POPFRAME\n");
-        genCovertBool();
+        genConvertBool();
         break;
 
     case TOKEN_LESS_EQUAL:
@@ -160,28 +160,28 @@ void genStackPush(Token t)
         printf("PUSHS LF@LTE%%tmp\n");
         printf("ORS\n");
         printf("POPFRAME\n");
-        genCovertBool();
+        genConvertBool();
         break;
 
     case TOKEN_GREATER_THAN:
         printf("MOVE GF@%%curr%%inst string@GTS\n");
         printf("CALL %%math%%check\n");
         printf("GTS\n");
-        genCovertBool();
+        genConvertBool();
         break;
 
     case TOKEN_LESS_THAN:
         printf("MOVE GF@%%curr%%inst string@LTS\n");
         printf("CALL %%math%%check\n");
         printf("LTS\n");
-        genCovertBool();
+        genConvertBool();
         break;
 
     case TOKEN_EQUAL:
         printf("MOVE GF@%%curr%%inst string@EQS\n");
         printf("CALL %%math%%check\n");
         printf("EQS\n");
-        genCovertBool();
+        genConvertBool();
         break;
 
     case TOKEN_NOT_EQUAL:
@@ -189,7 +189,7 @@ void genStackPush(Token t)
         printf("CALL %%math%%check\n");
         printf("EQS\n");
         printf("NOTS\n");
-        genCovertBool();
+        genConvertBool();
         break;
 
     case TOKEN_IDENTIFIER_VAR:
@@ -227,7 +227,7 @@ void genCheckTruth()
     printf("JUMPIFEQ %%iftype%%float LF@%%iftype string@float\n");
     printf("JUMPIFEQ %%iftype%%nil LF@%%iftype string@nil\n");
     printf("JUMPIFEQ %%iftype%%string LF@%%iftype string@string\n");
-    printf("EXIT 7\n"); //TODO chyba pokud string@string, maybe 7?
+    printf("EXIT int@7\n"); // TODO chyba pokud string@string, maybe 7?
     printf("LABEL %%iftype%%int\n");
     printf("EQ LF@%%tmpbool GF@%%exprresult int@0\n");
     printf("NOT LF@%%tmpbool LF@%%tmpbool\n");
@@ -696,7 +696,58 @@ void genStrval()
 void genSubstring()
 {
     static int n = 0;
-    
+    printf("CREATEFRAME\n");
+    printf("PUSHFRAME\n");
+    printf("DEFVAR LF@%%substring%%%d%%retval\n", n);
+    printf("DEFVAR LF@%%substring%%%d%%currchr\n", n);
+    printf("DEFVAR LF@%%i\n");
+    printf("DEFVAR LF@%%j\n");
+    printf("DEFVAR LF@%%str\n");
+    printf("DEFVAR LF@%%throwaway\n");
+    printf("DEFVAR LF@%%len\n");
+    printf("MOVE LF@%%substring%%%d%%retval nil@nil\n", n);
+    printf("POPS LF@%%j\n");
+    printf("POPS LF@%%i\n");
+    printf("POPS LF@%%str\n");
+    printf("TYPE LF@%%throwaway LF@%%j\n");
+    printf("JUMPIFNEQ %%badtype%d LF@%%throwaway string@int\n", n);
+    printf("TYPE LF@%%throwaway LF@%%i\n");
+    printf("JUMPIFNEQ %%badtype%d LF@%%throwaway string@int\n", n);
+    printf("TYPE LF@%%throwaway LF@%%str\n");
+    printf("JUMPIFNEQ %%badtype%d LF@%%throwaway string@string\n", n);
+    printf("JUMP %%correcttype%d\n", n);
+    printf("LABEL %%badtype%d\n", n);
+    printf("EXIT int@4\n");
+    printf("LABEL %%correcttype%d\n", n);
+    printf("GT LF@%%throwaway LF@%%i LF@%%j\n");
+    printf("JUMPIFEQ %%returnnull%d LF@%%throwaway bool@true\n", n);
+    printf("LT LF@%%throwaway LF@%%i int@0\n");
+    printf("JUMPIFEQ %%returnnull%d LF@%%throwaway bool@true\n", n);
+    printf("LT LF@%%throwaway LF@%%j int@0\n");
+    printf("JUMPIFEQ %%returnnull%d LF@%%throwaway bool@true\n", n);
+    printf("STRLEN LF@%%throwaway LF@%%str\n");
+    printf("EQ LF@%%throwaway LF@%%throwaway LF@%%i\n");
+    printf("JUMPIFEQ %%returnnull%d LF@%%throwaway bool@true\n", n);
+    printf("STRLEN LF@%%throwaway LF@%%str\n");
+    printf("GT LF@%%throwaway LF@%%i LF@%%throwaway\n");
+    printf("JUMPIFEQ %%returnnull%d LF@%%throwaway bool@true\n", n);
+    printf("STRLEN LF@%%throwaway LF@%%str\n");
+    printf("GT LF@%%throwaway LF@%%j LF@%%throwaway\n");
+    printf("JUMPIFEQ %%returnnull%d LF@%%throwaway bool@true\n", n);
+
+    printf("MOVE LF@%%len LF@%%j\n");
+    printf("SUB LF@%%len LF@%%len LF@%%i\n");
+    printf("MOVE LF@%%substring%%%d%%retval string@\n", n);
+    printf("JUMPIFEQ %%returnnull%d LF@%%len int@0\n", n);
+    printf("LABEL %%for%d\n", n);
+    printf("GETCHAR LF@%%substring%%%d%%currchr LF@%%str LF@%%i\n", n);
+    printf("CONCAT LF@%%substring%%%d%%retval LF@%%substring%%%d%%retval LF@%%substring%%%d%%currchr\n", n, n, n);
+    printf("SUB LF@%%len LF@%%len int@1\n");
+    printf("ADD LF@%%i LF@%%i int@1\n");
+    printf("JUMPIFNEQ %%for%d LF@%%len int@0\n", n);
+    printf("LABEL %%returnnull%d\n", n);
+    printf("POPFRAME\n");
+    printf("MOVE GF@%%exprresult TF@%%substring%%%d%%retval\n", n);
     n++;
 }
 
