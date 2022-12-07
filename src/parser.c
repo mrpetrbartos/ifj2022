@@ -30,6 +30,7 @@ int parserInit()
     parser.symtable = st;
     parser.localSymtable = stLoc;
     parser.condDec = false;
+    parser.currFunc = "main";
     return 0;
 }
 
@@ -229,23 +230,33 @@ int parseReturn()
     // <return> -> return <return_p>.
     int err = 0;
     GETTOKEN(&parser.currToken)
-    // TODO: if the fuction/main body doesn't return value,
-    // return can't be followed by an expression
+    Keyword returning = KW_NULL;
+    if (strcmp(parser.currFunc, "main") != 0)
+    {
+        SymtablePair *func = symtableFind(parser.symtable, parser.currFunc);
+        if (func->data.parameters.itemCount != -1)
+            returning = func->data.parameters.last->type;
+    }
+
+    bool expr;
+    BEGINNINGOFEX()
+
     // <return_p>  -> expr.
-    if (!parser.outsideBody || (parser.outsideBody && true))
+    if ((!parser.outsideBody || (parser.outsideBody && returning != KW_NULL)) && expr)
     {
         CHECKRULE(parseExpression(false))
+        genReturn(parser.currFunc, true);
     }
     else
     {
-        bool expr;
-        BEGINNINGOFEX()
-        if (expr && parser.outsideBody)
+        if ((expr && parser.outsideBody) || (returning == KW_VOID && expr))
         {
             printError(LINENUM, CHARNUM, "Current function doesn't have a return value, so return has to be followed by a semicolon.");
             return ERR_SYNTAX_AN;
         }
+        genReturn(parser.currFunc, false);
     }
+
     // <return_p>  -> ε
     return err;
 }
@@ -361,14 +372,14 @@ int parseFunctionCall()
 
     GETTOKEN(&parser.currToken)
 
-    Keyword rv;
+    ListNode *rv;
     if (foundFunction->data.parameters.itemCount == -1)
     {
-        rv = KW_NULL;
+        rv = NULL;
     }
     else
     {
-        rv = foundFunction->data.parameters.last->type;
+        rv = foundFunction->data.parameters.last;
     }
     genFuncCall((char *)foundFunction->key, parametersRealCount, rv);
 
@@ -617,6 +628,7 @@ int parseFunctionDef()
         printError(LINENUM, CHARNUM, "Keyword function has to be followed by function identifier.");
         return ERR_SYNTAX_AN;
     }
+    parser.currFunc = parser.currToken.value.string.content;
 
     if (symtableFind(parser.symtable, parser.currToken.value.string.content) != NULL)
     {
@@ -684,6 +696,7 @@ int parseFunctionDef()
     }
 
     parser.outsideBody = false;
+    parser.currFunc = "main";
     stackFree(parser.undefStack);
     return err;
 }

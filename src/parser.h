@@ -19,6 +19,7 @@ typedef struct
 {
     Token currToken;
     bool outsideBody;
+    char *currFunc;
     bool condDec; // Indicates conditional declaration
     Stack *stack;
     Stack *undefStack;

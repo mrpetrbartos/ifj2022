@@ -712,8 +712,9 @@ void genFuncDef2(char *funcname)
     printf("LABEL %%jump%%over%%%s\n", funcname);
 }
 
-void genFuncCall(char *funcname, int paramCount, Keyword returnType)
+void genFuncCall(char *funcname, int paramCount, ListNode *returnType)
 {
+    static int retnum = 0;
     if (strcmp(funcname, "write") == 0)
     {
         generateWrite(paramCount);
@@ -757,9 +758,22 @@ void genFuncCall(char *funcname, int paramCount, Keyword returnType)
     else
     {
         printf("CALL %%func%%%s\n", funcname);
-        if (returnType != KW_VOID)
+        if (returnType->type != KW_VOID)
+        {
+            printf("TYPE GF@%%corrtype%%1 TF@%s%%retval\n", funcname);
+            printf("JUMPIFEQ %%hasnil%d GF@%%corrtype%%1 string@nil\n", retnum);
+            printf("JUMPIFNEQ %%hasretvalue%d GF@%%corrtype%%1 string@\n", retnum);
+            printf("LABEL %%hasnil%d\n", retnum);
+            if (returnType->opt == true)
+            {
+                printf("JUMPIFEQ %%hasretvalue%d GF@%%corrtype%%1 string@nil\n", retnum);
+            }
+            printf("EXIT int@4\n");
+            printf("LABEL %%hasretvalue%d\n", retnum);
             printf("MOVE GF@%%exprresult TF@%s%%retval\n", funcname);
+        }
     }
+    retnum++;
 }
 
 void genDefineVariable(Token t)
@@ -785,4 +799,19 @@ void genCheckDefined(Token t)
     printf("LABEL %%doesexist%i\n", n);
     printf("POPFRAME\n");
     n++;
+}
+
+void genReturn(char *funcname, bool expr)
+{
+    (void)expr;
+    if (strcmp(funcname, "main") != 0)
+    {
+        printf("MOVE LF@%s%%retval GF@%%exprresult\n", funcname);
+        printf("POPFRAME\n");
+        printf("RETURN\n");
+    }
+    else
+    {
+        printf("EXIT int@0\n");
+    }
 }

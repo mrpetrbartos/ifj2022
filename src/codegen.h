@@ -53,7 +53,9 @@ void genFuncDef1(char *funcname, int parCount, LinkedList ll);
 
 void genFuncDef2(char *funcname);
 
-void genFuncCall(char *funcname, int paramCount, Keyword returnType);
+void genFuncCall(char *funcname, int paramCount, ListNode *returnType);
+
+void genReturn(char *funcname, bool expr);
 
 void genPushString(char *str);
 
