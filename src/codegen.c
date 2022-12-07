@@ -227,7 +227,7 @@ void genCheckTruth()
     printf("JUMPIFEQ %%iftype%%float LF@%%iftype string@float\n");
     printf("JUMPIFEQ %%iftype%%nil LF@%%iftype string@nil\n");
     printf("JUMPIFEQ %%iftype%%string LF@%%iftype string@string\n");
-    printf("EXIT int@7\n"); // TODO chyba pokud string@string, maybe 7?
+    printf("EXIT int@7\n");
     printf("LABEL %%iftype%%int\n");
     printf("EQ LF@%%tmpbool GF@%%exprresult int@0\n");
     printf("NOT LF@%%tmpbool LF@%%tmpbool\n");
@@ -313,6 +313,8 @@ void genMathInstCheck()
     printf("JUMPIFEQ %%EQS%%check GF@%%curr%%inst string@EQS\n");
     printf("JUMPIFEQ %%LTS%%GTS%%check%%1 GF@%%curr%%inst string@GTS\n");
     printf("JUMPIFEQ %%LTS%%GTS%%check%%1 GF@%%curr%%inst string@LTS\n");
+    printf("JUMPIFEQ %%LTS%%GTS%%check%%1 GF@%%curr%%inst string@GTE\n");
+    printf("JUMPIFEQ %%LTS%%GTS%%check%%1 GF@%%curr%%inst string@LTE\n");
     printf("JUMP %%math%%check%%exit\n");
     // addition, subtraction, multiplication type check
     printf("LABEL %%ADDS%%SUBS%%MULS%%check\n");
@@ -759,7 +761,6 @@ void genFuncDef1(char *funcname, int parCount, LinkedList ll)
     printf("CREATEFRAME\n");
     printf("DEFVAR TF@%s%%retval\n", funcname);
     ListNode *tmp = ll.head;
-    fprintf(stderr, "%i\n", parCount);
     for (size_t i = parCount; i > 0; i--)
     {
         printf("DEFVAR TF@%s\n", tmp->name);

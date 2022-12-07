@@ -664,7 +664,6 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
-    // TODO: return value type to symtable
     GETTOKEN(&parser.currToken)
     CHECKRULE(parseType(&ll))
 
