@@ -31,17 +31,17 @@ void genExpressionEnd();
 
 void genCheckTruth();
 
-void genIfElse1();
+void genIfElse1(int num);
 
-void genIfElse2();
+void genIfElse2(int num);
 
-void genIfElse3();
+void genIfElse3(int num);
 
-void genWhileLoop1();
+void genWhileLoop1(int num);
 
-void genWhileLoop2();
+void genWhileLoop2(int num);
 
-void genWhileLoop3();
+void genWhileLoop3(int num);
 
 void genDefineVariable(Token t);
 
@@ -53,7 +53,7 @@ void genFuncDef1(char *funcname, int parCount, LinkedList ll);
 
 void genFuncDef2(char *funcname);
 
-void genFuncCall(char *funcname, int paramCount);
+void genFuncCall(char *funcname, int paramCount, Keyword returnType);
 
 void genPushString(char *str);
 

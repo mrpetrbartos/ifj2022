@@ -237,52 +237,40 @@ void genCheckTruth()
     printf("LABEL %%initialskip\n");
 }
 
-void genIfElse1()
+void genIfElse1(int num)
 {
-    static int ifCnt = 0;
     printf("CALL %%truthcheck\n");
-    printf("JUMPIFEQ if%%%d%%else GF@%%exprresult bool@false\n", ifCnt);
-    ++ifCnt;
+    printf("JUMPIFEQ if%%%d%%else GF@%%exprresult bool@false\n", num);
 }
 
-void genIfElse2()
+void genIfElse2(int num)
 {
-    static int ifCnt = 0;
-    printf("JUMP if%%%d%%ifdefs\n", ifCnt);
-    printf("LABEL if%%%d%%else\n", ifCnt);
-    ++ifCnt;
+    printf("JUMP if%%%d%%ifdefs\n", num);
+    printf("LABEL if%%%d%%else\n", num);
 }
 
-void genIfElse3()
+void genIfElse3(int num)
 {
-    static int ifCnt = 0;
-    printf("LABEL if%%%d%%ifdefs\n", ifCnt);
-    printf("JUMP if%%%d%%end\n", ifCnt);
-    printf("LABEL if%%%d%%end\n", ifCnt);
-    ++ifCnt;
+    printf("LABEL if%%%d%%ifdefs\n", num);
+    printf("JUMP if%%%d%%end\n", num);
+    printf("LABEL if%%%d%%end\n", num);
 }
 
-void genWhileLoop1()
+void genWhileLoop1(int num)
 {
-    static int whileCnt = 0;
-    printf("LABEL while%%%d%%start\n", whileCnt);
-    ++whileCnt;
+    printf("LABEL while%%%d%%start\n", num);
 }
 
-void genWhileLoop2()
+void genWhileLoop2(int num)
 {
-    static int whileCnt = 0;
     printf("CALL %%truthcheck\n");
-    printf("JUMPIFEQ while%%%d%%end GF@%%exprresult bool@false\n", whileCnt);
-    ++whileCnt;
+    printf("JUMPIFEQ while%%%d%%end GF@%%exprresult bool@false\n", num);
 }
 
-void genWhileLoop3()
+void genWhileLoop3(int num)
 {
-    static int whileCnt = 0;
-    printf("JUMP while%%%d%%start\n", whileCnt);
-    printf("LABEL while%%%d%%end\n", whileCnt);
-    ++whileCnt;
+    printf("JUMP while%%%d%%start\n", num);
+    printf("LABEL while%%%d%%end\n", num);
 }
 
 void genMathInstCheck()
@@ -724,7 +712,7 @@ void genFuncDef2(char *funcname)
     printf("LABEL %%jump%%over%%%s\n", funcname);
 }
 
-void genFuncCall(char *funcname, int paramCount)
+void genFuncCall(char *funcname, int paramCount, Keyword returnType)
 {
     if (strcmp(funcname, "write") == 0)
     {
@@ -769,7 +757,8 @@ void genFuncCall(char *funcname, int paramCount)
     else
     {
         printf("CALL %%func%%%s\n", funcname);
-        printf("MOVE GF@%%exprresult TF@%s%%retval\n", funcname);
+        if (returnType != KW_VOID)
+            printf("MOVE GF@%%exprresult TF@%s%%retval\n", funcname);
     }
 }
 

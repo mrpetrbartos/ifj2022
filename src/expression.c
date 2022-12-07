@@ -248,7 +248,7 @@ int reduce()
     }
 }
 
-int shift()
+int shift(Token *preShift)
 {
     Token shift = {.type = SHIFT_SYMBOL};
     Token topmost = topmostTerminal();
@@ -285,15 +285,17 @@ int shift()
     free(putaway);
 
     stackPush(parser.stack, parser.currToken);
+    *preShift = parser.currToken;
     int err = getToken(&(parser.currToken), false);
 
     return err;
 }
 
-int parseExpression()
+int parseExpression(bool endWithBracket)
 {
     int err = 0;
     Token bottom = {.type = DOLLAR};
+    static Token beforeEnd = {.type = DOLLAR};
     stackPush(parser.stack, bottom);
 
     genExpressionBegin();
@@ -307,16 +309,22 @@ int parseExpression()
             break;
 
         case (S):
-            err = shift();
+            err = shift(&beforeEnd);
             break;
 
         case (E):
             stackPush(parser.stack, parser.currToken);
+            beforeEnd = parser.currToken;
             err = getToken(&(parser.currToken), false);
             break;
 
         case (O):
             stackFree(parser.stack);
+            if (endWithBracket && beforeEnd.type != TOKEN_RIGHT_BRACKET)
+            {
+                printError(beforeEnd.pos.line, beforeEnd.pos.character, "Expression has to be wrapped by braces.");
+                return 2;
+            }
             genExpressionEnd();
             return 0;
 

@@ -103,6 +103,7 @@ int parsePeBody()
 int parseWhile()
 {
     int err = 0;
+    static int whileCnt = 0;
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_LEFT_BRACKET)
     {
@@ -110,11 +111,13 @@ int parseWhile()
         return ERR_SYNTAX_AN;
     }
 
-    genWhileLoop1();
+    whileCnt++;
+    int currWhile = whileCnt;
+    genWhileLoop1(currWhile);
 
-    CHECKRULE(parseExpression())
+    CHECKRULE(parseExpression(true))
 
-    genWhileLoop2();
+    genWhileLoop2(currWhile);
 
     // Right bracket is checked by expression parsing
 
@@ -137,7 +140,7 @@ int parseWhile()
         return ERR_SYNTAX_AN;
     }
 
-    genWhileLoop3();
+    genWhileLoop3(currWhile);
 
     return err;
 }
@@ -146,6 +149,7 @@ int parseWhile()
 int parseIf()
 {
     int err = 0;
+    static int ifCnt = 0;
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_LEFT_BRACKET)
     {
@@ -153,12 +157,14 @@ int parseIf()
         return ERR_SYNTAX_AN;
     }
 
-    CHECKRULE(parseExpression())
+    CHECKRULE(parseExpression(true))
 
     Token tmp = {.type = DOLLAR};
     stackPush(parser.undefStack, tmp);
 
-    genIfElse1();
+    ifCnt++;
+    int currentCnt = ifCnt;
+    genIfElse1(currentCnt);
 
     // Right bracket is checked by expression parsing
 
@@ -188,7 +194,7 @@ int parseIf()
         return ERR_SYNTAX_AN;
     }
 
-    genIfElse2();
+    genIfElse2(currentCnt);
 
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_LEFT_BRACE)
@@ -213,7 +219,7 @@ int parseIf()
         return ERR_SYNTAX_AN;
     }
 
-    genIfElse3();
+    genIfElse3(currentCnt);
 
     return err;
 }
@@ -228,7 +234,7 @@ int parseReturn()
     // <return_p>  -> expr.
     if (!parser.outsideBody || (parser.outsideBody && true))
     {
-        CHECKRULE(parseExpression())
+        CHECKRULE(parseExpression(false))
     }
     else
     {
@@ -355,7 +361,16 @@ int parseFunctionCall()
 
     GETTOKEN(&parser.currToken)
 
-    genFuncCall((char *)foundFunction->key, parametersRealCount);
+    Keyword rv;
+    if (foundFunction->data.parameters.itemCount == -1)
+    {
+        rv = KW_NULL;
+    }
+    else
+    {
+        rv = foundFunction->data.parameters.last->type;
+    }
+    genFuncCall((char *)foundFunction->key, parametersRealCount, rv);
 
     return err;
 }
@@ -372,7 +387,7 @@ int parseAssign(Token variable)
     // <assign_v> -> expr
     else
     {
-        CHECKRULE(parseExpression())
+        CHECKRULE(parseExpression(false))
     }
 
     if (parser.condDec)
@@ -409,7 +424,7 @@ int parseBody()
 
         // <body> -> expr ;
         case KW_NULL:
-            CHECKRULE(parseExpression())
+            CHECKRULE(parseExpression(false))
             CHECKSEMICOLON()
             break;
 
@@ -429,7 +444,7 @@ int parseBody()
         {
             Token variable = parser.currToken;
             SymtablePair *alrDefined = symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, variable.value.string.content);
-            if (alrDefined == NULL || alrDefined->data.possiblyUndefined)
+            if (alrDefined == NULL)
             {
                 genDefineVariable(variable);
             }
@@ -444,7 +459,7 @@ int parseBody()
         // <body> -> expr ;
         else
         {
-            CHECKRULE(parseExpression())
+            CHECKRULE(parseExpression(false))
         }
         CHECKSEMICOLON()
     }
@@ -460,7 +475,7 @@ int parseBody()
     else
     {
         // <body> -> expr ;
-        CHECKRULE(parseExpression())
+        CHECKRULE(parseExpression(false))
         CHECKSEMICOLON()
     }
 
@@ -484,7 +499,10 @@ int parseTypeP(LinkedList *ll)
     case KW_INT:
     case KW_FLOAT:
         if (ll != NULL)
+        {
             listInsert(ll, parser.currToken.value.keyword);
+            ll->head->opt = false;
+        }
         return 0;
 
     default:
@@ -499,6 +517,7 @@ int parseTypeN(LinkedList *ll)
     int err = 0;
     GETTOKEN(&parser.currToken)
     CHECKRULE(parseTypeP(ll))
+    ll->head->opt = true;
     return err;
 }
 
@@ -508,12 +527,10 @@ int parseParamsDefN(LinkedList *ll)
     if (parser.currToken.type != TOKEN_OPTIONAL_TYPE)
     {
         CHECKRULE(parseTypeP(ll))
-        ll->head->opt = false;
     }
     else
     {
         CHECKRULE(parseTypeN(ll))
-        ll->head->opt = true;
     }
 
     GETTOKEN(&parser.currToken)
@@ -552,19 +569,22 @@ int parseParamsDef(LinkedList *ll)
         return parseParamsDefN(ll);
 }
 
-int parseType()
+int parseType(LinkedList *ll)
 {
     // <type> -> <type_n>.
     if (parser.currToken.type == TOKEN_OPTIONAL_TYPE)
     {
-        return parseTypeN(NULL);
+        return parseTypeN(ll);
     }
     // <type> -> void.
-    // <type> -> <type_p>.
     else if (parser.currToken.type == TOKEN_KEYWORD && parser.currToken.value.keyword == KW_VOID)
+    {
+        listInsert(ll, parser.currToken.value.keyword);
         return 0;
+    }
 
-    return parseTypeP(NULL);
+    // <type> -> <type_p>.
+    return parseTypeP(ll);
 }
 
 int findDuplicateParams()
@@ -634,7 +654,7 @@ int parseFunctionDef()
 
     // TODO: return value type to symtable
     GETTOKEN(&parser.currToken)
-    CHECKRULE(parseType())
+    CHECKRULE(parseType(&ll))
 
     GETTOKEN(&parser.currToken)
     if (parser.currToken.type != TOKEN_LEFT_BRACE)
@@ -643,14 +663,14 @@ int parseFunctionDef()
         return ERR_SYNTAX_AN;
     }
 
-    symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount, parser.condDec, ll);
+    symtableAdd(parser.symtable, func.value.string.content, FUNC, ll.itemCount - 1, parser.condDec, ll);
 
     if (findDuplicateParams() != 0)
     {
         return ERR_FUNC_VAR;
     }
 
-    genFuncDef1(func.value.string.content, ll.itemCount, ll);
+    genFuncDef1(func.value.string.content, ll.itemCount - 1, ll);
 
     GETTOKEN(&parser.currToken)
     CHECKRULE(parsePeBody())
@@ -725,7 +745,7 @@ int parse()
         return ERR_SYNTAX_AN;
     }
 
-    LinkedList empty = {.itemCount = 0};
+    LinkedList empty = {.itemCount = -1};
     // Insert builtin functions
     symtableAdd(parser.symtable, "reads", FUNC, 0, false, empty);
     symtableAdd(parser.symtable, "readi", FUNC, 0, false, empty);
