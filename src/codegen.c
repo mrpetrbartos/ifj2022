@@ -134,14 +134,32 @@ void genStackPush(Token t)
         break;
 
     case TOKEN_GREATER_EQUAL:
+        printf("MOVE GF@%%curr%%inst string@GTE\n");
+        printf("CALL %%math%%check\n");
         printf("GTS\n");
+        printf("CREATEFRAME\n");
+        printf("PUSHFRAME\n");
+        printf("DEFVAR LF@GTE%%tmp\n");
+        printf("POPS LF@GTE%%tmp\n");
         printf("EQS\n");
+        printf("PUSHS LF@GTE%%tmp\n");
+        printf("ORS\n");
+        printf("POPFRAME\n");
         genCovertBool();
         break;
 
     case TOKEN_LESS_EQUAL:
+        printf("MOVE GF@%%curr%%inst string@LTE\n");
+        printf("CALL %%math%%check\n");
         printf("LTS\n");
+        printf("CREATEFRAME\n");
+        printf("PUSHFRAME\n");
+        printf("DEFVAR LF@LTE%%tmp\n");
+        printf("POPS LF@LTE%%tmp\n");
         printf("EQS\n");
+        printf("PUSHS LF@LTE%%tmp\n");
+        printf("ORS\n");
+        printf("POPFRAME\n");
         genCovertBool();
         break;
 
@@ -209,7 +227,7 @@ void genCheckTruth()
     printf("JUMPIFEQ %%iftype%%float LF@%%iftype string@float\n");
     printf("JUMPIFEQ %%iftype%%nil LF@%%iftype string@nil\n");
     printf("JUMPIFEQ %%iftype%%string LF@%%iftype string@string\n");
-    printf("EXIT \n"); //TODO chyba pokud string@string
+    printf("EXIT 7\n"); //TODO chyba pokud string@string, maybe 7?
     printf("LABEL %%iftype%%int\n");
     printf("EQ LF@%%tmpbool GF@%%exprresult int@0\n");
     printf("NOT LF@%%tmpbool LF@%%tmpbool\n");
@@ -293,6 +311,8 @@ void genMathInstCheck()
     printf("JUMPIFEQ %%DIVS%%check GF@%%curr%%inst string@DIVS\n");
     printf("JUMPIFEQ %%CONCAT%%check GF@%%curr%%inst string@CONCAT\n");
     printf("JUMPIFEQ %%EQS%%check GF@%%curr%%inst string@EQS\n");
+    printf("JUMPIFEQ %%LTS%%GTS%%check%%1 GF@%%curr%%inst string@GTS\n");
+    printf("JUMPIFEQ %%LTS%%GTS%%check%%1 GF@%%curr%%inst string@LTS\n");
     printf("JUMP %%math%%check%%exit\n");
     // addition, subtraction, multiplication type check
     printf("LABEL %%ADDS%%SUBS%%MULS%%check\n");
@@ -423,7 +443,6 @@ void genMathInstCheck()
     printf("LABEL %%LTS%%GTS%%check%%tmp2int\n");
     printf("INT2FLOAT LF@tmp2 LF@tmp2\n");
     printf("JUMP %%LTS%%GTS%%check%%2\n");
-    printf("JUMP %%math%%check%%exit\n");
     // concatenation type check
     printf("LABEL %%CONCAT%%check\n");
     printf("JUMPIFEQ %%CONCAT%%check%%1 LF@tmp1%%type string@string\n");
@@ -445,6 +464,14 @@ void genMathInstCheck()
     printf("LABEL %%CONCAT%%check%%tmp2toempty\n");
     printf("MOVE LF@tmp2 string@\n");
     printf("JUMP %%CONCAT%%check%%2\n");
+    // end check for LTE & GTE operations
+    printf("JUMPIFEQ %%OR%%EQUAL%%VARIANT GF@%%curr%%inst string@LTE\n");
+    printf("JUMPIFEQ %%OR%%EQUAL%%VARIANT GF@%%curr%%inst string@GTE\n");
+    printf("JUMP %%math%%check%%exit\n");
+    printf("LABEL %%OR%%EQUAL%%VARIANT\n");
+    printf("PUSHS LF@tmp2\n");
+    printf("PUSHS LF@tmp1\n");
+    printf("JUMP %%math%%check%%exit\n");
     // exit for all
     printf("LABEL %%math%%check%%exit\n");
     printf("PUSHS LF@tmp2\n");
