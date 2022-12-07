@@ -593,11 +593,14 @@ void genFloatval()
     printf("DEFVAR LF@%%floatval%%%d%%val\n",n);
     printf("DEFVAR LF@%%floatval%%%d%%val%%type\n",n);
     printf("POPS LF@%%floatval%%%d%%val\n",n);
-    printf("TYPE LF@%%floatval%%%d%%val%%type LF@%%floatval%%%d%%val\n",n);
-    printf("JUMPIFEQ %%func%%floatval%%%d%%end LF@%%floatval%%%d%%val%%type string@float\n",n,n);
+    printf("TYPE LF@%%floatval%%%d%%val%%type LF@%%floatval%%%d%%val\n",n,n);
+    printf("JUMPIFEQ %%func%%floatval%%%d%%float LF@%%floatval%%%d%%val%%type string@float\n",n,n);
     printf("JUMPIFEQ %%func%%floatval%%%d%%int LF@%%floatval%%%d%%val%%type string@int\n",n,n);
     printf("JUMPIFEQ %%func%%floatval%%%d%%nil LF@%%floatval%%%d%%val%%type string@nil\n",n,n);
     printf("JUMPIFEQ %%func%%floatval%%%d%%string LF@%%floatval%%%d%%val%%type string@string\n",n,n);
+    printf("LABEL %%func%%floatval%%%d%%float\n",n);
+    printf("MOVE LF@%%floatval%%%d%%retval TF@%%floatval%%%d%%val\n",n,n);
+    printf("JUMP %%func%%floatval%%%d%%end\n",n);
     printf("LABEL %%func%%floatval%%%d%%int\n",n);
     printf("INT2FLOAT LF@%%floatval%%%d%%retval TF@%%floatval%%%d%%val\n",n,n);
     printf("JUMP %%func%%floatval%%%d%%end\n",n);
@@ -608,7 +611,7 @@ void genFloatval()
     printf("JUMP %%func%%floatval%%%d%%end\n",n);
     printf("LABEL %%func%%floatval%%%d%%end\n",n);
     printf("POPFRAME\n");
-    printf("MOVE GF@%%exprresult TF@floatval%%%d%%retval\n",n);
+    printf("MOVE GF@%%exprresult TF@%%floatval%%%d%%retval\n",n);
     n++;
 }
 
@@ -622,10 +625,13 @@ void genIntval()
     printf("DEFVAR LF@%%intval%%%d%%val%%type\n",n);
     printf("POPS LF@%%intval%%%d%%val\n",n);
     printf("TYPE LF@%%intval%%%d%%val%%type TF@%%intval%%%d%%val\n",n,n);
-    printf("JUMPIFEQ %%func%%intval%%%d%%end LF@%%intval%%%d%%val%%type string@int\n",n,n);
+    printf("JUMPIFEQ %%func%%intval%%%d%%int LF@%%intval%%%d%%val%%type string@int\n",n,n);
     printf("JUMPIFEQ %%func%%intval%%%d%%float LF@%%intval%%%d%%val%%type string@float\n",n,n);
     printf("JUMPIFEQ %%func%%intval%%%d%%nil LF@%%intval%%%d%%val%%type string@nil\n",n,n);
     printf("JUMPIFEQ %%func%%intval%%%d%%string LF@%%intval%%%d%%val%%type string@string\n",n,n);
+    printf("LABEL %%func%%intval%%%d%%int\n",n);
+    printf("MOVE LF@%%intval%%%d%%retval TF@%%intval%%%d%%val\n",n,n);
+    printf("JUMP %%func%%intval%%%d%%end\n",n);
     printf("LABEL %%func%%intval%%%d%%float\n",n);
     printf("INT2FLOAT LF@%%intval%%%d%%retval TF@%%intval%%%d%%val\n",n,n);
     printf("JUMP %%func%%intval%%%d%%end\n",n);
@@ -636,7 +642,7 @@ void genIntval()
     printf("EXIT int@4\n");
     printf("LABEL %%func%%intval%%%d%%end\n",n);
     printf("POPFRAME\n");
-    printf("MOVE GF@%%exprresult TF@intval%%%d%%retval\n",n);
+    printf("MOVE GF@%%exprresult TF@%%intval%%%d%%retval\n",n);
     n++;
 }
 
@@ -650,12 +656,15 @@ void genStrval()
     printf("DEFVAR LF@%%strval%%%d%%val%%type\n",n);
     printf("POPS LF@%%strval%%%d%%val\n",n);
     printf("TYPE LF@%%strval%%%d%%val%%type TF@%%strval%%%d%%val\n",n,n);
-    printf("JUMPIFEQ %%func%%strval%%%d%%end LF@%%strval%%%d%%val%%type string@string\n",n,n);
+    printf("JUMPIFEQ %%func%%strval%%%d%%string LF@%%strval%%%d%%val%%type string@string\n",n,n);
     printf("JUMPIFEQ %%func%%strval%%%d%%int LF@%%strval%%%d%%val%%type string@int\n",n,n);
     printf("JUMPIFEQ %%func%%strval%%%d%%float LF@%%strval%%%d%%val%%type string@float\n",n,n);
     printf("JUMPIFEQ %%func%%strval%%%d%%nil LF@%%strval%%%d%%val%%type string@nil\n",n,n);
+    printf("LABEL %%func%%strval%%%d%%string\n",n);
+    printf("MOVE LF@%%strval%%%d%%retval LF@%%strval%%%d%%val\n",n,n);
+    printf("JUMP %%func%%strval%%%d%%end\n",n);
     printf("LABEL %%func%%strval%%%d%%nil\n",n);
-    printf("MOV LF@%%strval%%%d%%retval string@\n",n);
+    printf("MOVE LF@%%strval%%%d%%retval string@\n",n);
     printf("JUMP %%func%%strval%%%d%%end\n",n);
     printf("LABEL %%func%%strval%%%d%%int\n",n);
     printf("EXIT int@4\n");
@@ -663,7 +672,7 @@ void genStrval()
     printf("EXIT int@4\n");
     printf("LABEL %%func%%strval%%%d%%end\n",n);
     printf("POPFRAME\n");
-    printf("MOVE GF@%%exprresult TF@strval%%%d%%retval\n",n);
+    printf("MOVE GF@%%exprresult TF@%%strval%%%d%%retval\n",n);
     n++;
 }
 void genFuncDef1(char *funcname, int parCount, LinkedList ll)
