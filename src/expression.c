@@ -41,9 +41,11 @@ Token topmostTerminal()
 int reduceI()
 {
     Token head = parser.stack->head->t;
+    SymtablePair *foundVar;
     if (head.type == TOKEN_IDENTIFIER_VAR)
     {
-        if (symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, head.value.string.content) == NULL)
+        foundVar = symtableFind(parser.outsideBody ? parser.localSymtable : parser.symtable, head.value.string.content);
+        if (foundVar == NULL)
         {
             vStrFree(&(head.value.string));
             printError(head.pos.line, head.pos.character, "Undefined variable used in an expression.");
@@ -57,6 +59,9 @@ int reduceI()
         genStackPush(t);
     else
     {
+        if (foundVar->data.possiblyUndefined)
+            genCheckDefined(t);
+        genStackPush(t);
     }
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -138,10 +143,7 @@ int reduceComparison()
     Token t;
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
-    // TODO: push instr
-    printf("AND");
-    if (t.type == TOKEN_NOT_EQUAL)
-        printf("NOT");
+    genStackPush(t);
     stackPop(parser.stack, NULL);
     stackPop(parser.stack, &t);
     if (t.type != SHIFT_SYMBOL)
@@ -246,10 +248,15 @@ int reduce()
     }
 }
 
-int shift()
+int shift(Token *preShift)
 {
     Token shift = {.type = SHIFT_SYMBOL};
     Token topmost = topmostTerminal();
+    if (topmost.type == 999)
+    {
+        printError(parser.currToken.pos.line, parser.currToken.pos.character, "Couldn't shift symbol, invalid expression.");
+        return ERR_SYNTAX_AN;
+    }
     StackItem *tmp = parser.stack->head;
 
     // Prepare stack to temporarily store tokens between
@@ -278,16 +285,20 @@ int shift()
     free(putaway);
 
     stackPush(parser.stack, parser.currToken);
+    *preShift = parser.currToken;
     int err = getToken(&(parser.currToken), false);
 
     return err;
 }
 
-int parseExpression()
+int parseExpression(bool endWithBracket)
 {
     int err = 0;
     Token bottom = {.type = DOLLAR};
+    static Token beforeEnd = {.type = DOLLAR};
     stackPush(parser.stack, bottom);
+
+    genExpressionBegin();
 
     while (true)
     {
@@ -298,16 +309,23 @@ int parseExpression()
             break;
 
         case (S):
-            err = shift();
+            err = shift(&beforeEnd);
             break;
 
         case (E):
             stackPush(parser.stack, parser.currToken);
+            beforeEnd = parser.currToken;
             err = getToken(&(parser.currToken), false);
             break;
 
         case (O):
             stackFree(parser.stack);
+            if (endWithBracket && beforeEnd.type != TOKEN_RIGHT_BRACKET)
+            {
+                printError(beforeEnd.pos.line, beforeEnd.pos.character, "Expression has to be wrapped by braces.");
+                return 2;
+            }
+            genExpressionEnd();
             return 0;
 
         default:

@@ -10,16 +10,19 @@
 #include "scanner.h"
 #include "structures.h"
 #include "error.h"
-#include "stdlib.h"
+#include <stdlib.h>
 #include "expression.h"
 #include "symtable.h"
+#include "codegen.h"
 
 typedef struct
 {
     Token currToken;
     bool outsideBody;
-    bool inIf;
+    char *currFunc;
+    bool condDec; // Indicates conditional declaration
     Stack *stack;
+    Stack *undefStack;
     Symtable *symtable;
     Symtable *localSymtable;
 } Parser;
@@ -85,5 +88,12 @@ void parserDestroy();
  * @return int Zero if code was parsed without an error, non-zero otherwise.
  */
 int parse();
+
+/**
+ * @brief Checks the "declare(strict_types=1);" part of prologue.
+ *
+ * @return int Non-zero number if prologue isn't in the specified format, zero otherwise.
+ */
+int checkPrologue();
 
 #endif
